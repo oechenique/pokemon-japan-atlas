@@ -45,5 +45,33 @@ jobs:
       - run: terraform init -backend=false -input=false
       - run: terraform validate
 
-  # El job del pipeline (ruff + pytest dentro de la imagen de Airflow) se suma
-  # cuando esté el Docker Compose, en la segunda parte de la Fase 0.
+  pipeline:
+    name: pipeline (ruff + pytest en la imagen de Airflow)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker compose build airflow-scheduler
+      # El checkout es del usuario del runner y el contenedor corre como airflow:
+      # sin cachés para no escribir en el volumen montado.
+      - name: ruff y pytest
+        run: >-
+          docker compose run --rm --no-deps
+          -e CONNECTION_CHECK_MAX_COUNT=0
+          -w /opt/airflow/pipeline
+          airflow-scheduler
+          bash -c "ruff check --no-cache . && ruff format --check --no-cache . && pytest -p no:cacheprovider"
+
+  publish-size:
+    name: publish (ningún archivo > 10 MB)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Límite: 10 MiB (10 485 760 bytes) por archivo de publish/.
+      - name: Tamaño de artefactos
+        run: |
+          big=$(find publish -type f -size +10485760c -printf '%p (%s bytes)\n')
+          if [ -n "$big" ]; then
+            echo "$big" | sed 's/^/::error::Supera 10 MiB: /'
+            exit 1
+          fi
+          echo "Todos los archivos de publish/ pesan 10 MiB o menos."

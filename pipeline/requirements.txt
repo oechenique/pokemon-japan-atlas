@@ -1,0 +1,7 @@
+# Dependencias del pipeline, instaladas sobre la imagen oficial de Airflow con
+# sus constraints. Versiones fijadas: la corrida tiene que ser reproducible.
+duckdb==1.5.6
+
+# Herramientas de verificación (CI y local corren dentro de la misma imagen).
+pytest==9.1.1
+ruff==0.16.10
