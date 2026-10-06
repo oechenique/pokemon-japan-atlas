@@ -1,0 +1,41 @@
+{
+  "name": "pokemon-japan-atlas-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "tokens": "node scripts/build-tokens.ts",
+    "fonts": "node scripts/sync-fonts.ts",
+    "prebuild": "npm run tokens",
+    "predev": "npm run tokens",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run",
+    "check:export": "node scripts/check-export.ts"
+  },
+  "dependencies": {
+    "next": "16.4.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@fontsource/dela-gothic-one": "5.3.0",
+    "@fontsource/dotgothic16": "5.3.0",
+    "@fontsource/m-plus-1-code": "5.3.0",
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "24.19.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.0",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "5.0.3"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "type": "module"
+}

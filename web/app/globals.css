@@ -1,0 +1,29 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+/* Base global derivada de los tokens (reglas/01 y 02). */
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-radius: 0;
+  }
+
+  html {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-data);
+    font-size: var(--fs-data);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: var(--ink);
+    color: var(--bg);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}

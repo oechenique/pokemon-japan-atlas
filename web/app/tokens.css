@@ -1,0 +1,195 @@
+/* GENERADO por `npm run tokens` a partir de tokens/tokens.ts. No editar a mano. */
+
+@font-face {
+  font-family: "Dela Gothic One";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/dela-gothic-one-latin-400-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Dela Gothic One";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/dela-gothic-one-latin-ext-400-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "DotGothic16";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/dotgothic16-latin-400-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "DotGothic16";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/dotgothic16-latin-ext-400-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "M PLUS 1 Code";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/m-plus-1-code-latin-400-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "M PLUS 1 Code";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/m-plus-1-code-latin-ext-400-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "M PLUS 1 Code";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/m-plus-1-code-latin-700-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "M PLUS 1 Code";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/m-plus-1-code-latin-ext-700-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* Día por defecto; noche si el sistema la prefiere y no hay tema elegido. */
+:root,
+[data-theme="day"] {
+  --bg: #F4EFE6;
+  --ink: #1A1A1A;
+  --ink-inverse: #F4EFE6;
+  --accent: #E3350D;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+  --bg: #0F1A2E;
+  --ink: #FFD27A;
+  --ink-inverse: #0F1A2E;
+  --accent: #E3350D;
+  color-scheme: dark;
+  }
+}
+
+[data-theme="night"] {
+  --bg: #0F1A2E;
+  --ink: #FFD27A;
+  --ink-inverse: #0F1A2E;
+  --accent: #E3350D;
+  color-scheme: dark;
+}
+
+:root {
+  --ink-80: color-mix(in srgb, var(--ink) 80%, transparent);
+  --ink-35: color-mix(in srgb, var(--ink) 35%, transparent);
+  --ink-15: color-mix(in srgb, var(--ink) 15%, transparent);
+  --gutter: 16px;
+  --fs-wordmark: 32px;
+  --fs-label: 12px;
+  --fs-subtitle: 12px;
+  --fs-data: 13px;
+  --fs-data-sm: 12px;
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-standard: cubic-bezier(.4, 0, .2, 1);
+  --dur-fast: 150ms;
+  --dur-base: 400ms;
+  --dur-reveal: 700ms;
+  --stagger: 120ms;
+  --dur-fly: 1600ms;
+  --dur-pulse: 2200ms;
+  --dur-fade: 400ms;
+}
+
+[data-theme="gameboy"] {
+  --bg: #9BBC0F;
+  --ink: #0F380F;
+  --ink-inverse: #9BBC0F;
+  --accent: #306230;
+  color-scheme: light;
+  --fill: #8BAC0F;
+  --ink-80: var(--ink);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --gutter: 32px;
+    --fs-wordmark: 64px;
+    --fs-label: 18px;
+    --fs-subtitle: 18px;
+    --fs-data: 16px;
+    --fs-data-sm: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-reveal: 0ms;
+    --stagger: 0ms;
+    --dur-fly: 0ms;
+    --dur-pulse: 0ms;
+    --dur-fade: 150ms;
+  }
+}
+
+@theme inline {
+  /* Sin paleta, fuentes, tamaños ni radios por defecto de Tailwind: solo tokens. */
+  --color-*: initial;
+  --color-bg: var(--bg);
+  --color-ink: var(--ink);
+  --color-ink-inverse: var(--ink-inverse);
+  --color-accent: var(--accent);
+  --color-ink-80: var(--ink-80);
+  --color-ink-35: var(--ink-35);
+  --color-ink-15: var(--ink-15);
+  --font-*: initial;
+  --font-wordmark: "Dela Gothic One", system-ui, "Hiragino Sans", "Yu Gothic", sans-serif;
+  --font-label: "DotGothic16", system-ui, "Hiragino Sans", "Yu Gothic", sans-serif;
+  --font-data: "M PLUS 1 Code", system-ui, "Hiragino Sans", "Yu Gothic", sans-serif;
+  --text-*: initial;
+  --text-wordmark: var(--fs-wordmark);
+  --text-wordmark--letter-spacing: -0.03em;
+  --text-label: var(--fs-label);
+  --text-label--letter-spacing: 0.08em;
+  --text-subtitle: var(--fs-subtitle);
+  --text-subtitle--letter-spacing: 0.18em;
+  --text-data: var(--fs-data);
+  --text-data--letter-spacing: normal;
+  --text-data-sm: var(--fs-data-sm);
+  --text-data-sm--letter-spacing: normal;
+  --spacing: initial;
+  --spacing-*: initial;
+  --spacing-px: 1px;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+  --radius-*: initial;
+  --breakpoint-*: initial;
+  --breakpoint-md: 48rem;
+  --container-*: initial;
+  --container-page: 1400px;
+  --ease-*: initial;
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-standard: cubic-bezier(.4, 0, .2, 1);
+  --animate-*: initial;
+}

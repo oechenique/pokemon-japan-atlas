@@ -1,0 +1,30 @@
+# Datos intermedios del pipeline (bronze/silver/gold). publish/ SÍ se versiona:
+# el repo público es lo que cumple el share-alike de ODbL (reglas/00).
+/data/*
+!/data/.gitkeep
+
+# Terraform: state local y caché de providers (el lock file sí se versiona).
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+
+# Entorno y secretos
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Capturas de sitios de terceros: quedan solo en local, no se redistribuyen en el repo público.
+/referencias/**/capturas/
