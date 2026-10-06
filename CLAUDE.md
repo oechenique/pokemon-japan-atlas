@@ -29,3 +29,21 @@ Las reglas de `reglas/` mandan sobre cualquier otra cosa, incluido este archivo:
 - Verificación de `pipeline/` (desde Git Bash, `MSYS_NO_PATHCONV=1` evita que reescriba la ruta): `docker compose run --rm --no-deps -e CONNECTION_CHECK_MAX_COUNT=0 -w /opt/airflow/pipeline airflow-scheduler bash -c "ruff check . && ruff format --check . && pytest"`.
 - CI falla si algún archivo de `publish/` supera 10 MiB.
 - Verificación de `infra/`: `terraform fmt -check && terraform init -backend=false && terraform validate`.
+
+## Estado actual
+
+**Fase 0 · Esqueleto: cerrada** (2026-10-06).
+
+- Commits: `f184800` (esqueleto, web con tokens, infra base) y `e4b0c3d` (Airflow en Docker Compose, job de pipeline y tope de `publish/`).
+- CI en verde en GitHub (web, infra, pipeline, publish-size): corrida `37547428649`.
+- Repo público: https://github.com/oechenique/pokemon-japan-atlas (lo creó Claude Code con `gh`; no existía).
+
+Decisiones de esta sesión:
+
+- Airflow 3.3.2 (imagen slim + driver de Postgres) con LocalExecutor y Postgres 17. Sin triggerer ni Celery para ahorrar RAM; se suman si un DAG los necesita.
+- UI de Airflow sin login (SimpleAuthManager, todos admin), expuesta solo en `127.0.0.1:8080`. Credenciales de desarrollo local, no se despliegan.
+- DuckDB 1.5.6 con `spatial` y `h3` (repositorio community) instaladas al construir la imagen, para no bajarlas en cada corrida.
+- Una sola imagen para correr y verificar el pipeline (ruff y pytest incluidos).
+- Tope de `publish/`: 10 MiB (10.485.760 bytes) por archivo, controlado en CI.
+
+**Próximo paso: Fase 1, bloqueada hasta recibir `reglas/03`.**
