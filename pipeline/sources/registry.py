@@ -59,7 +59,16 @@ KIND_PARAMS: dict[str, frozenset[str]] = {
     "rest_json": frozenset({"resources"}),
     "cog_tiles": frozenset({"bucket", "region", "tile_name", "aois"}),
     "earthdata_tiles": frozenset(
-        {"product", "collection", "year", "archive_url", "token_env", "tiles", "crop_bbox"}
+        {
+            "product",
+            "collection",
+            "year",
+            "archive_url",
+            "token_env",
+            "tiles",
+            "crop_bbox",
+            "layers",
+        }
     ),
     "local_csv": frozenset({"dir", "files"}),
 }
@@ -354,6 +363,9 @@ def _check_earthdata_tiles(params, where, _bbox_names, _base_dir) -> list[str]:
         or not all(isinstance(t, str) and BLACK_MARBLE_TILE.match(t) for t in tiles)
     ):
         errors.append(f"{where}: tiles tiene que ser una lista de teselas hXXvYY")
+    layers = params["layers"]
+    if not isinstance(layers, list) or not layers or not all(_nonempty_str(x) for x in layers):
+        errors.append(f"{where}: layers tiene que ser una lista no vacía de capas del HDF5")
     errors += _validate_bbox(params["crop_bbox"], f"{where}.crop_bbox")
     return errors
 

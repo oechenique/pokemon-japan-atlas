@@ -48,7 +48,7 @@ Fecha de verificación: 2026-10-06.
 - Producto: "VIIRS/NPP Lunar BRDF-Adjusted Nighttime Lights Yearly L3 Global 15 arc second Linear Lat Lon Grid", DOI 10.5067/VIIRS/VNP46A4.002.
   - Ficha: https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/products/VNP46A4/
 - Licencia: la política de datos de NASA Earth Science (https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance) indica CC0 para misiones dirigidas por NASA. Se pide citar el dataset y no sugerir respaldo de NASA. No exige logo.
-- Formato: teselas HDF5 de 10°×10°. Japón entra en 7 teselas (h30v05, h30v06, h31v04, h31v05, h31v06, h32v04, h32v05), que suman 641 MB para 2024. No es el archivo global. Hay años disponibles hasta 2025.
+- Formato: teselas HDF5 de 10°×10°. Japón entra en 8 teselas (h30v05, h30v06, h31v04, h31v05, h31v06, h32v04, h32v05, h32v06), que suman 708 MB para 2025. La octava, h32v06, se sumó el 2026-10-07 para cubrir Ogasawara, que cae dentro del recorte. No es el archivo global. Hay años disponibles hasta 2025.
 - Acceso: **requiere cuenta de NASA Earthdata** (gratuita, alta inmediata). El listado es público, pero la descarga sin token devuelve 303.
 
 ## Poké Lids (ポケふた) · OSM sirve

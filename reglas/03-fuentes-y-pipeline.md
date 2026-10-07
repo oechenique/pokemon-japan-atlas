@@ -23,7 +23,7 @@ Cada fuente se declara en `pipeline/sources/registry.yaml` con: `id`, `kind`, `u
 | `wikidata` | Wikidata SPARQL | CC0 | Nombres en ja/en/es, regiones reales, datos factuales | ✅ |
 | `pokeapi` | PokeAPI (**solo datos**, nunca imágenes) | Datos factuales | Generaciones, regiones del juego, años | ✅ |
 | `kontur_population` | Kontur Population, recorte de Japón (hexágonos H3 de 400 m) | CC BY 4.0 | Urbano/rural y densidad | ✅ verificada 2026-10-06 |
-| `viirs_night` | NASA Black Marble VNP46A4 (luces nocturnas VIIRS anuales), 7 teselas de Japón | CC0 (política de datos de NASA); requiere `EARTHDATA_TOKEN` | Luz y oscuridad | ✅ verificada 2026-10-06 (reemplaza a EOG) |
+| `viirs_night` | NASA Black Marble VNP46A4 (luces nocturnas VIIRS anuales), 8 teselas de Japón | CC0 (política de datos de NASA); requiere `EARTHDATA_TOKEN` | Luz y oscuridad | ✅ verificada 2026-10-06 (reemplaza a EOG) |
 | `copernicus_dem` | Copernicus DEM GLO-90 (bucket público en AWS Open Data) | Licencia GLO-90 Full, Free & Open: avisos y exención de responsabilidad obligatorios (ver `NOTICE`) | Cuenca visual del Fuji, raster | ✅ verificada 2026-10-06 |
 | `seeds` | CSVs curados a mano en `pipeline/seeds/` | Propia; cada fila lleva su URL de fuente | Correspondencias región/ciudad del juego ↔ real, datos sin fuente abierta | ✅ |
 

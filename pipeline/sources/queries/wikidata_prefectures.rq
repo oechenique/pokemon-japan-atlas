@@ -1,5 +1,6 @@
 # Las 47 prefecturas vigentes de Japón, con nombres en ja/en/es y su región real.
 # Puede devolver más de una fila por prefectura (varias P361); Silver las agrupa.
+# El ORDER BY cubre todas las columnas para que la respuesta, y su checksum, sea estable.
 SELECT ?prefecture ?iso ?name_ja ?name_en ?name_es ?region WHERE {
   ?prefecture wdt:P31 wd:Q50337 ;
               wdt:P300 ?iso .
@@ -9,4 +10,4 @@ SELECT ?prefecture ?iso ?name_ja ?name_en ?name_es ?region WHERE {
   OPTIONAL { ?prefecture rdfs:label ?name_es FILTER(LANG(?name_es) = "es") }
   OPTIONAL { ?prefecture wdt:P361 ?region }
 }
-ORDER BY ?iso
+ORDER BY ?iso ?prefecture ?region

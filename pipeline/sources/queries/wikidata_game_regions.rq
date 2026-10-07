@@ -18,3 +18,4 @@ SELECT ?region ?name_ja ?name_en ?name_es WHERE {
   OPTIONAL { ?region rdfs:label ?name_en FILTER(LANG(?name_en) = "en") }
   OPTIONAL { ?region rdfs:label ?name_es FILTER(LANG(?name_es) = "es") }
 }
+ORDER BY ?region

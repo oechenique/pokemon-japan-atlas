@@ -242,8 +242,12 @@ sources:
       archive_url: "https://ladsweb.modaps.eosdis.nasa.gov/archive/allData/5200/VNP46A4/{year}/001/"
       token_env: EARTHDATA_TOKEN
       # Teselas de 10° que cubren Japón: se bajan, se recortan a crop_bbox y se descartan.
-      tiles: [h30v05, h30v06, h31v04, h31v05, h31v06, h32v04, h32v05]
+      # h32v06 cubre Ogasawara.
+      tiles: [h30v05, h30v06, h31v04, h31v05, h31v06, h32v04, h32v05, h32v06]
       crop_bbox: [24.0, 122.9, 45.6, 145.9]
+      # Capas del HDF5 que se recortan (una GeoTIFF por capa): la radiancia anual sin
+      # nieve y su bandera de calidad.
+      layers: [AllAngle_Composite_Snow_Free, AllAngle_Composite_Snow_Free_Quality]
 
   - id: seeds
     kind: local_csv

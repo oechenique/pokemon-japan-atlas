@@ -1,0 +1,58 @@
+"""seeds: los CSV curados de pipeline/seeds/, copiados tal cual a Bronze.
+
+Antes de copiarlos se controla lo mínimo de reglas/03: columnas exigidas, una
+source_url https por fila (nunca Bulbapedia, reglas/00) y un confidence válido.
+"""
+
+from __future__ import annotations
+
+import csv
+import io
+from pathlib import Path
+
+from pipeline.sources.base import BronzeRun, IngestError
+
+PIPELINE_DIR = Path(__file__).resolve().parents[1]
+CONFIDENCE = frozenset({"oficial", "ampliamente aceptada", "teoría de fans"})
+FORBIDDEN_HOSTS = ("bulbapedia", "bulbagarden")
+
+
+def ingest(run: BronzeRun) -> None:
+    seeds_dir = PIPELINE_DIR / run.source.params["dir"]
+    for item in run.source.params["files"]:
+        data = (seeds_dir / item["file"]).read_bytes()
+        errors = validate_seed(data, item["required_columns"])
+        if errors:
+            raise IngestError(f"seed {item['name']} inválido:\n- " + "\n- ".join(errors))
+        rows = len(data.decode("utf-8").splitlines()) - 1
+        run.write_bytes(f"{item['name']}.csv", data, extra={"rows": rows, "file": item["file"]})
+
+
+def validate_seed(data: bytes, required_columns: list[str]) -> list[str]:
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError:
+        return ["el archivo no está en UTF-8"]
+    reader = csv.DictReader(io.StringIO(text, newline=""))
+    missing = set(required_columns) - set(reader.fieldnames or [])
+    if missing:
+        return [f"faltan columnas {sorted(missing)}"]
+    errors = []
+    rows = 0
+    for line, row in enumerate(reader, start=2):
+        rows += 1
+        url = (row.get("source_url") or "").strip()
+        if not url.startswith("https://"):
+            errors.append(f"línea {line}: source_url tiene que ser https")
+        elif any(host in url.lower() for host in FORBIDDEN_HOSTS):
+            errors.append(f"línea {line}: Bulbapedia no se usa como fuente (reglas/00)")
+        if "confidence" in row and row["confidence"] not in CONFIDENCE:
+            errors.append(
+                f"línea {line}: confidence {row['confidence']!r} no es {sorted(CONFIDENCE)}"
+            )
+        empty = [c for c in required_columns if not (row.get(c) or "").strip()]
+        if empty:
+            errors.append(f"línea {line}: columnas vacías {empty}")
+    if rows == 0:
+        errors.append("el seed no tiene filas")
+    return errors

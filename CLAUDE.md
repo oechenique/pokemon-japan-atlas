@@ -27,7 +27,7 @@ Las reglas de `reglas/` mandan sobre cualquier otra cosa, incluido este archivo:
 - `web/` usa Next.js 16, que cambia APIs respecto de versiones anteriores: seguí `web/AGENTS.md` y consultá la documentación incluida en `web/node_modules/next/dist/docs/` antes de escribir código de Next.
 - Los tokens salen solo de `web/tokens/tokens.ts`. `npm run tokens` regenera `web/app/tokens.css` (no se edita a mano) y `npm run fonts` copia las fuentes a `web/public/fonts/`.
 - Verificación de `web/`: `npm run lint && npm run typecheck && npm test && npm run build && npm run check:export`.
-- Pipeline: `docker compose up -d` levanta Airflow 3 (LocalExecutor + Postgres) en http://localhost:8080, sin login. La imagen (`pipeline/Dockerfile`) trae DuckDB con `spatial` y `h3` preinstaladas. `atlas_smoke` es el DAG de humo del entorno.
+- Pipeline: `docker compose up -d` levanta Airflow 3 (LocalExecutor + Postgres) en http://localhost:8080, sin login. La imagen (`pipeline/Dockerfile`) trae DuckDB con `spatial` y `h3` preinstaladas. `atlas_smoke` es el DAG de humo del entorno. `atlas_run` se dispara con `docker compose exec airflow-scheduler airflow dags trigger atlas_run`; el informe de cada corrida queda en `data/bronze/_runs/`.
 - Verificación de `pipeline/` (desde Git Bash, `MSYS_NO_PATHCONV=1` evita que reescriba la ruta): `docker compose run --rm --no-deps -e CONNECTION_CHECK_MAX_COUNT=0 -w /opt/airflow/pipeline airflow-scheduler bash -c "ruff check . && ruff format --check . && pytest"`.
 - CI falla si algún archivo de `publish/` supera 10 MiB.
 - Verificación de `infra/`: `terraform fmt -check && terraform init -backend=false && terraform validate`.
@@ -50,29 +50,54 @@ Decisiones de esta sesión:
 
 **Reglas nuevas recibidas (2026-10-06):** `reglas/03-fuentes-y-pipeline.md` (fuentes, Medallion, contratos, DQ gate, DAG `atlas_run`) y `reglas/04-catalogo-30-dias.md` (catálogo de los 30 días: web o render lateral). Ajustes en la 00 (todos los días salen del pipeline; fases 1 a 3 redefinidas) y en la 01 (token `--dur-fade`, pendiente de llevar a `web/tokens/tokens.ts`).
 
-**Fase 1 · Bronze: en curso. Pasos 1 a 3 cerrados (2026-10-06); próximo paso: el 4 (dependencias e imagen).**
+**Fase 1 · Bronze: cerrada** (2026-10-07).
 
-Plan aprobado (2026-10-06):
+Qué quedó:
 
-- Overpass y Wikidata se consultan en cada corrida.
-- En la Fase 1 solo se crea el seed regiones del juego ↔ prefecturas, sin Bulbapedia como `source_url`.
-- `fetched_at` y `checksum` van al `metadata.json` de cada corrida.
-- `osm_buildings` se toma alrededor del Pokémon Center Mega Tokyo.
+- Registro de las 9 fuentes (`pipeline/sources/registry.yaml`), licencias verificadas (`pipeline/sources/LICENSES.md`), `NOTICE` y `.env.example`.
+- Base común de ingesta (`pipeline/sources/base.py`):
+  - escribe en `data/bronze/<source>/run_id=<id>/` con escritura atómica y un `metadata.json` por fuente (`fetched_at`, checksum por archivo y del conjunto, licencia, avisos);
+  - descargas condicionales por ETag; lo que no cambió se enlaza (hardlink) desde la corrida anterior;
+  - reanuda los reintentos sin repetir consultas.
+- Un módulo por fuente en `pipeline/sources/<id>.py`. Overpass comparte `_overpass.py`. Un test controla que registro y módulos coincidan.
+- Seed `pipeline/seeds/game_regions.csv`: 25 filas (Kanto, Johto, Hoenn, Sinnoh ↔ prefecturas), fuente Wikidata P144 y `confidence = ampliamente aceptada`. Johto = Kansai + Tōkai (Aichi, Gifu, Shizuoka), no todo Chūbu.
+- DAG `atlas_run` con `start_run` y el TaskGroup `bronze` (mapeo dinámico por fuente, reintentos con backoff e informe en `data/bronze/_runs/`). El run_id viaja como `atlas_run_id`, porque `run_id` está reservado en Airflow.
+- Imagen con rasterio 1.5.2 (GDAL 3.12.2), h5py, numpy y requests, más `pip check`.
+- 107 tests.
 
-Pasos cerrados:
+Corridas de `atlas_run`:
 
-- **1 y 2 · Verificación de licencias y de las Poké Lids**: registrada en `pipeline/sources/LICENSES.md`.
-- **3 · Registro de fuentes**:
-  - `pipeline/sources/registry.yaml` con las 9 fuentes, consultas SPARQL en `pipeline/sources/queries/` y validador en `pipeline/sources/registry.py`, con tests.
-  - `NOTICE` en la raíz y `.env.example` con `EARTHDATA_TOKEN`, que compose pasa a Airflow.
+| run_id | Modo | Duración | Resultado |
+|---|---|---|---|
+| `20261007T125201Z` | query | 34 min | Primera ingesta: 94 archivos, 314,6 MB. |
+| `20261007T133653Z` | query | 49 min | 8 de 9 fuentes con checksum idéntico, Overpass incluido. VIIRS difería solo por el `mtime` del directorio en `listing.json`; se corrigió: ahora pasa a `metadata.json`. |
+| `20261007T143142Z` | reuse | 30 s | Overpass sin consultas (51 archivos reusados). El listado de VIIRS cambió una vez por el formato nuevo y después se verificó estable. |
 
-Decisiones aprobadas (también reflejadas en las reglas 03 y 04):
+Bronze por corrida (MB): `copernicus_dem` 130,3 · `osm_overpass` 99,0 · `natural_earth` 60,9 · `kontur_population` 16,1 · `viirs_night` 6,9 · `osm_buildings` 1,2 · `pokeapi` 0,27 · `wikidata` 0,03 · `seeds` 0,003. Con hardlinks, las tres corridas ocupan 397 MB en `data/bronze/`.
 
-- `viirs_night` pasa a NASA Black Marble VNP46A4 (CC0, 7 teselas de Japón) en lugar de EOG. Se publica solo la agregación H3. El token va en `.env`, lo crea el usuario y vence a los 60 días.
+Decisiones de la Fase 1 (también reflejadas en las reglas 03 y 04):
+
+- `viirs_night` pasa a NASA Black Marble VNP46A4 (CC0) en lugar de EOG, con 8 teselas: el 2026-10-07 se sumó h32v06 para cubrir Ogasawara. Se guardan dos capas recortadas (`AllAngle_Composite_Snow_Free` y `_Quality`) y se publica solo la agregación H3. El token va en `.env`, lo crea el usuario y vence a los 60 días (el actual, el 2026-12-06). Si falta o venció y hay corrida anterior, se reusa el recorte entero con un aviso; si no la hay, falla.
 - Copernicus GLO-90: los avisos y la exención de responsabilidad van en el footer, el manifest, los renders laterales y el `NOTICE`.
 - Poké Lids: desde OSM, con cobertura declarada y sin fechas. Los aportes del día 16 tienen que venir de relevamiento propio, nunca del sitio oficial.
-- Overpass: consultas por bbox (no `area`) a una sola instancia (`overpass-api.de`), con `overpass.snapshot_date` fijado para la corrida final de publicación. Un `remark` de error cuenta como falla, aunque venga con HTTP 200.
+- Overpass:
+  - consultas por bbox (no `area`) a una sola instancia (`overpass-api.de`), con `overpass.snapshot_date` fijado para la corrida final de publicación;
+  - un `remark` de error cuenta como falla, aunque venga con HTTP 200;
+  - `timestamp_osm_base` pasa a `metadata.json`, para que el checksum dependa solo de los datos.
+- `OVERPASS_MODE` en `.env`: `query` (default) o `reuse`, que copia el último Bronze sin consultar si las consultas no cambiaron, y lo marca en `metadata.json` (`extra.overpass_mode`, `warnings`, `reused_from`). Es solo para desarrollo.
 
-Pendiente del paso 6: un test que verifique que cada fuente del registro tenga su módulo y que no haya módulos sin registrar.
+Pendiente para la Fase 2:
 
-Pendiente para la Fase 2: deduplicar por id de OSM en Silver, porque las bbox de Overpass se solapan.
+- Deduplicar por id de OSM en Silver, porque las bbox de Overpass se solapan.
+- VIIRS: el producto trae píxeles de relleno en islas chicas (25% alrededor de Chichijima). Tratarlos como nulos al agregar a H3.
+
+Pendiente para la Fase 3:
+
+- La publicación tiene que fallar si algún Bronze de la corrida tiene `extra.overpass_mode = reuse` (o, en general, archivos de Overpass con `reused_from`), para que nunca se publique por accidente un snapshot reusado.
+
+Propuesta, sin implementar: partir Overpass en una tarea por consulta. La segunda corrida tardó 49 min, a 11 del `execution_timeout` de 1 h.
+
+- `osm_overpass` deja de ser una sola tarea. Un `@task` arma la lista de consultas (categoría × bbox, hoy 50) desde el registro, y `fetch_query` se expande sobre esa lista con `map_index_template` = `<categoría>/<bbox>`. Cada consulta tiene su propio `execution_timeout` (unos 5 min) y sus reintentos con backoff.
+- Concurrencia 1 con un pool `overpass` de 1 slot, compartido con `osm_buildings`. Es mejor que `max_active_tis_per_dag`, que limita una sola tarea. El lock de archivo y `pause_s` quedan como respaldo.
+- Una tarea final `finish_overpass` junta los resultados y escribe el `metadata.json` de la fuente. Para eso, `BronzeRun.finish()` tiene que poder llamarse aparte de la ingesta. El `_progress.jsonl` ya sirve como punto de encuentro entre tareas.
+- El TaskGroup `bronze` queda con el mapeo por fuente para las otras 7 y un sub-grupo `overpass`.

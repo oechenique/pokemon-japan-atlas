@@ -21,6 +21,8 @@ x-airflow: &airflow
     ATLAS_PUBLISH_DIR: /opt/airflow/publish
     # Secretos de fuentes, desde .env (ver .env.example).
     EARTHDATA_TOKEN: ${EARTHDATA_TOKEN:-}
+    # Desarrollo: reuse copia el último Bronze de Overpass sin consultar (default: query).
+    OVERPASS_MODE: ${OVERPASS_MODE:-query}
   volumes:
     - ./pipeline:/opt/airflow/pipeline
     - ./data:/opt/airflow/data
