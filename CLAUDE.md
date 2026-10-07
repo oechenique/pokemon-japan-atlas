@@ -52,6 +52,8 @@ Decisiones de esta sesión:
 
 **Fase 1 · Bronze: cerrada** (2026-10-07).
 
+- Commit: `d64d6ca`. CI en verde (web, infra, pipeline, publish-size): corrida `37637810819`.
+
 Qué quedó:
 
 - Registro de las 9 fuentes (`pipeline/sources/registry.yaml`), licencias verificadas (`pipeline/sources/LICENSES.md`), `NOTICE` y `.env.example`.
