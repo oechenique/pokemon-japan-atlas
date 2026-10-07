@@ -1,8 +1,9 @@
 """outside_region: regiones fuera de Japón, como un punto en su inspiración real.
 
-- Unova, Kalos y Alola: Wikidata P144 (lugar y coordenadas, CC0). Como Wikidata es
-  una sola fuente, su confidence es "teoría de fans" hasta sumar otra de otro grupo.
-- Galar y Paldea: seed regions_outside_japan (fuente y confidence por fila).
+- Las 5 vienen del seed regions_outside_japan, con fuente, grupo editorial y confidence
+  por fila (coordenadas del ítem de Wikidata del lugar real, CC0).
+- Wikidata P144 queda de respaldo: si una región falta en el seed, entra desde ahí
+  como "teoría de fans" (una sola fuente).
 - Generación de PokeAPI (main_generation de cada región); año de la fecha de los
   primeros juegos de esa generación (Wikidata).
 """

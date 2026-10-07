@@ -298,9 +298,10 @@ sources:
         - name: prefecture_regions
           file: prefecture_regions.csv
           required_columns: [prefecture_code, real_region, source_url]
-        # Regiones fuera de Japón que Wikidata no cubre con P144 (Galar y Paldea, al
-        # 2026-10-07). Las demás salen de la consulta game_regions_based_on.
+        # Las 5 regiones fuera de Japón con su fuente por fila. Galar y Paldea no tienen
+        # P144 en Wikidata; Unova, Kalos y Alola sí, pero acá llevan su fuente oficial.
+        # La consulta game_regions_based_on queda como respaldo y control.
         - name: regions_outside_japan
           file: regions_outside_japan.csv
           required_columns:
-            [region_id, game_name, generation, year, real_place, real_place_wikidata, lat, lon, confidence, source_url]
+            [region_id, game_name, generation, year, real_place, real_place_wikidata, lat, lon, confidence, source_url, source_groups]

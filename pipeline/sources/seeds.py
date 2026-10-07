@@ -25,6 +25,12 @@ PUBLISHER_GROUPS = {
     "cbr.com": "valnet",
     "wikidata.org": "wikidata",
     "wikipedia.org": "wikipedia",
+    # Polygon era de Vox Media en 2022, pero desde 2025 es de Valnet: se cuenta como
+    # Valnet, que es lo conservador. Kotaku era de G/O Media en 2022.
+    "polygon.com": "valnet",
+    "kotaku.com": "g_o_media",
+    # Grupo propio: no hay dato verificado de su dueño.
+    "siliconera.com": "siliconera",
     "x.com": "oficial",
     "nintendo.co.jp": "oficial",
     "pokemon.co.jp": "oficial",

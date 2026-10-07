@@ -162,6 +162,9 @@ Paso 3 · Silver base (corrida `20261007T174238Z`, con `reuse`):
   - `game_region` (4): unión de prefecturas. Su `confidence` es la más baja entre sus filas, así que Johto queda `ampliamente aceptada`.
   - `game_place` (40).
   - `outside_region` (5): generación de PokeAPI y año desde la consulta nueva `generation_games` (fecha de los primeros juegos, solo fechas reales).
-- Unova, Kalos y Alola salen solo de Wikidata `P144`, así que por la regla de los dos grupos quedan como `teoría de fans` hasta sumar otra fuente.
-- Paldea está `ampliamente aceptada` con Wikipedia como única cita. Con la regla de grupos debería ser `teoría de fans`: pendiente de decisión del usuario.
+- `regions_outside_japan.csv` pasa a tener las 5 regiones, con fuente y `source_groups` por fila. Wikidata `P144` queda de respaldo: una región que falte en el seed entra como `teoría de fans`.
+  - Unova: `oficial` (Masuda en "社長が訊く": ニューヨークをモチーフにしました).
+  - Kalos y Alola: `oficial`, con declaraciones de los desarrolladores relatadas o reproducidas por Siliconera (presentación de la Japan Expo 2013 y entrevista de Nintendo of Europe de 2016).
+  - Galar: `oficial` (pokemon.com, archivado).
+  - Paldea: `ampliamente aceptada`. Wikipedia, Polygon y Kotaku, leídas y confirmadas. Polygon cuenta como Valnet, su dueño desde 2025.
 

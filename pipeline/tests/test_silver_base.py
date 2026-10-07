@@ -274,7 +274,9 @@ def test_outside_region_mixes_wikidata_and_seed(tmp_path, con):
             ),
         },
     )
-    seed = (SEEDS_DIR / "regions_outside_japan.csv").read_text(encoding="utf-8")
+    # Sin Alola en el seed: tiene que entrar por el respaldo de Wikidata P144.
+    seed_lines = (SEEDS_DIR / "regions_outside_japan.csv").read_text(encoding="utf-8").splitlines()
+    seed = "\n".join(line for line in seed_lines if not line.startswith("alola,")) + "\n"
     _bronze(tmp_path, "seeds", {"regions_outside_japan.csv": seed})
     summary = outside_region.build(con, Bronze(RUN, tmp_path), root=tmp_path)
     assert summary["rows"] == 5
@@ -287,6 +289,10 @@ def test_outside_region_mixes_wikidata_and_seed(tmp_path, con):
         ).fetchall()
     }
     assert rows["galar"][:3] == (8, 2019, "oficial")
-    assert rows["unova"][:3] == (5, 2010, "teoría de fans")
-    assert rows["kalos"][3] == "Francia"
+    # El seed tiene las 5 con su fuente; Wikidata P144 queda de respaldo.
+    assert rows["unova"][:3] == (5, 2010, "oficial")
+    assert rows["paldea"][2] == "ampliamente aceptada"
+    assert rows["kalos"][3] == "Francia metropolitana"
+    assert rows["alola"][2] == "teoría de fans"
+    assert rows["alola"][3] == "Hawaii"
     assert rows["alola"][4] == -158.0
