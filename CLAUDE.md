@@ -9,8 +9,10 @@ Las reglas de `reglas/` mandan sobre cualquier otra cosa, incluido este archivo:
 - `reglas/00-vision-y-alcance.md`: principios no negociables, stack, estructura, contrato pipeline → web y fases.
 - `reglas/01-design-tokens.md`: color, tipografía, espaciado, movimiento y estilo del mapa.
 - `reglas/02-ui-ux.md`: layout, componentes, interacciones, accesibilidad y performance.
+- `reglas/03-fuentes-y-pipeline.md`: fuentes y licencias, flujo Medallion, contratos Silver, DQ gate y orquestación.
+- `reglas/04-catalogo-30-dias.md`: qué resuelve cada día del challenge y si va en la web o como render lateral.
 
-**Antes de empezar cada fase, leé completas las tres reglas.** Antes de tocar `web/`, releé siempre la 01 y la 02.
+**Antes de empezar cada fase, leé completas las cinco reglas.** Antes de tocar `web/`, releé siempre la 01 y la 02.
 
 ## Forma de trabajo
 
@@ -46,4 +48,15 @@ Decisiones de esta sesión:
 - Una sola imagen para correr y verificar el pipeline (ruff y pytest incluidos).
 - Tope de `publish/`: 10 MiB (10.485.760 bytes) por archivo, controlado en CI.
 
-**Próximo paso: Fase 1, bloqueada hasta recibir `reglas/03`.**
+**Reglas nuevas recibidas (2026-10-06):** `reglas/03-fuentes-y-pipeline.md` (fuentes, Medallion, contratos, DQ gate, DAG `atlas_run`) y `reglas/04-catalogo-30-dias.md` (catálogo de los 30 días: web o render lateral). Ajustes en la 00 (todos los días salen del pipeline; fases 1 a 3 redefinidas) y en la 01 (token `--dur-fade`, pendiente de llevar a `web/tokens/tokens.ts`).
+
+**Fase 1 · Bronze: en curso.** Plan aprobado (2026-10-06): Overpass y Wikidata se consultan en cada corrida; en Fase 1 solo se crea el seed regiones del juego ↔ prefecturas, sin Bulbapedia como `source_url`; `fetched_at` y `checksum` van al `metadata.json` de cada corrida; `osm_buildings` alrededor del Pokémon Center Mega Tokyo.
+
+- Pasos 1 y 2 hechos (verificación de licencias y de las Poké Lids), registrados en `pipeline/sources/LICENSES.md`.
+- Decisiones aprobadas sobre el informe:
+  - `viirs_night` pasa a NASA Black Marble VNP46A4 (CC0, 7 teselas de Japón) en lugar de EOG. Se publica solo la agregación H3. El token va en `.env` como `EARTHDATA_TOKEN`, lo crea el usuario y vence a los 60 días.
+  - Copernicus GLO-90: los avisos y la exención de responsabilidad van en el footer, el manifest, los renders laterales y un `NOTICE` en la raíz.
+  - Poké Lids: desde OSM, con cobertura declarada y sin fechas. Los aportes del día 16 tienen que venir de relevamiento propio, nunca del sitio oficial.
+  - Overpass: consultas por bbox (no `area`), una sola instancia (`overpass-api.de`) y `osm_snapshot_date` fijado para la corrida final de publicación. Un `remark` de error cuenta como falla.
+
+Pendiente para la Fase 2: deduplicar por id de OSM en Silver, porque las bbox de Overpass se solapan.
