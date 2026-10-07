@@ -37,10 +37,21 @@ def data_root() -> Path:
     return Path(os.environ.get("ATLAS_DATA_DIR", "data"))
 
 
+# Tope de memoria por conexión: Airflow corre varias tareas a la vez en el mismo
+# contenedor. Si no alcanza, DuckDB vuelca a disco en data/_tmp/duckdb.
+MEMORY_LIMIT = os.environ.get("ATLAS_DUCKDB_MEMORY", "2GB")
+THREADS = int(os.environ.get("ATLAS_DUCKDB_THREADS", "2"))
+
+
 def connect() -> duckdb.DuckDBPyConnection:
     con = duckdb.connect()
     con.load_extension("spatial")
     con.load_extension("h3")
+    spill = data_root() / "_tmp" / "duckdb"
+    spill.mkdir(parents=True, exist_ok=True)
+    con.execute(f"SET memory_limit = '{MEMORY_LIMIT}'")
+    con.execute(f"SET threads = {THREADS}")
+    con.execute(f"SET temp_directory = '{spill.as_posix()}'")
     return con
 
 

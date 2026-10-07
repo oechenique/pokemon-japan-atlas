@@ -19,6 +19,10 @@ DEPENDENCIES: dict[str, tuple[str, ...]] = {
     "game_region": ("prefecture",),
     "game_place": (),
     "outside_region": (),
+    "poi": ("prefecture", "game_region"),
+    "rail": (),
+    "station": ("prefecture",),
+    "building": (),
 }
 
 

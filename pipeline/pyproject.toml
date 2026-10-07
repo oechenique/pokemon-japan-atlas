@@ -10,6 +10,11 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "AIR"]
 
+[tool.ruff.lint.per-file-ignores]
+# Los tests arman Bronze y Silver sintéticos con SQL y CSV literales: partirlos para
+# que entren en 100 columnas los vuelve ilegibles.
+"tests/*" = ["E501"]
+
 [tool.ruff.lint.isort]
 # El código se importa como `pipeline.*` (PYTHONPATH=/opt/airflow en la imagen).
 known-first-party = ["pipeline"]

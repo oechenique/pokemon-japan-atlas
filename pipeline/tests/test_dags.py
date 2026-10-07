@@ -45,3 +45,15 @@ def test_ingest_and_overpass_split_cover_the_registry_once(registry):
     split = {s.id for s in registry.sources if s.kind in KINDS}
     assert split == {"osm_overpass", "osm_buildings"}
     assert single | split == set(registry.ids) and not single & split
+
+
+def test_atlas_run_silver_tasks_follow_dependencies_without_retries():
+    from pipeline.transforms.silver_entities import DEPENDENCIES
+
+    dag = _bag().dags["atlas_run"]
+    for entity, upstream in DEPENDENCIES.items():
+        task = dag.get_task(f"silver.{entity}")
+        assert task.retries == 0 and task.pool == "duckdb", entity
+        assert {f"silver.{u}" for u in upstream} <= task.upstream_task_ids, entity
+        assert {o.name for o in task.outlets} == {f"silver.{entity}"}
+    assert "bronze.report" in dag.get_task("silver.prefecture").upstream_task_ids

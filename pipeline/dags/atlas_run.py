@@ -35,6 +35,7 @@ from pipeline.transforms.silver_entities import DEPENDENCIES
 DATA_URI = "file:///opt/airflow/data"
 REGISTRY_ASSET = Asset(name="registry", uri=f"file://{REGISTRY_PATH.as_posix()}")
 OVERPASS_POOL = "overpass"
+DUCKDB_POOL = "duckdb"
 BRONZE_ASSETS = {
     source_id: Asset(name=f"bronze.{source_id}", uri=f"{DATA_URI}/bronze/{source_id}")
     for source_id in load_registry().ids
@@ -137,6 +138,7 @@ def atlas_run():
             @task(
                 task_id=entity,
                 retries=0,
+                pool=DUCKDB_POOL,
                 inlets=[BRONZE_ASSETS[s] for s in CONTRACTS[entity].sources],
                 outlets=[SILVER_ASSETS[entity]],
             )

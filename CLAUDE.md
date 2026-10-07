@@ -99,7 +99,7 @@ Pendiente para la Fase 3:
 
 La partición de Overpass que se había propuesto acá se implementó en el paso 1 de la Fase 2.
 
-**Fase 2 · Silver/Gold: en curso. Pasos 1 a 3 cerrados (2026-10-07); próximo: paso 4 (Silver vectorial), con `OVERPASS_MODE=reuse`.**
+**Fase 2 · Silver/Gold: en curso. Pasos 1 a 4 cerrados (2026-10-07); próximo: paso 5 (rasters y H3), con `OVERPASS_MODE=reuse`.**
 
 Plan aprobado (2026-10-07):
 
@@ -167,4 +167,29 @@ Paso 3 · Silver base (corrida `20261007T174238Z`, con `reuse`):
   - Kalos y Alola: `oficial`, con declaraciones de los desarrolladores relatadas o reproducidas por Siliconera (presentación de la Japan Expo 2013 y entrevista de Nintendo of Europe de 2016).
   - Galar: `oficial` (pokemon.com, archivado).
   - Paldea: `ampliamente aceptada`. Wikipedia, Polygon y Kotaku, leídas y confirmadas. Polygon cuenta como Valnet, su dueño desde 2025.
+
+Paso 4 · Silver vectorial (corrida `20261007T180708Z`, con `reuse`):
+
+- `pipeline/transforms/osm.py`: lee Overpass como JSON y deduplica por id de OSM.
+  - Si un elemento aparece en varias categorías, gana la de mayor precedencia.
+  - Cuenta los descartes: los repetidos por bbox solapadas y los que caen en más de una categoría.
+  - Prefectura de cada punto: `within`, o `nearest` a menos de 0,05° (unos 5 km); si no, NULL.
+- Entidades:
+  - `poi` (21 196):
+    - 21 Pokémon Center, 9 Store, 2 Café, 257 Poké Lids, 1022 onsen y 19 885 centrales.
+    - Center y Store se separan por el nombre, porque en OSM hay errores de marca: se reclasificaron 3.
+    - Los dos cafés salen del seed, y el nodo de OSM que cita el seed no se duplica.
+  - `rail` (47 195): 13 101 vías de Shinkansen (6338 km) y 34 094 de la red de Kanto. Ante un duplicado gana `shinkansen`.
+  - `station` (9091): solo 4 tienen `lines`.
+  - `building` (1745): 41 con altura y 237 con cantidad de pisos. Los multipolígonos se arman como outer menos inner.
+- DuckDB:
+  - cada conexión tiene un tope de 2 GB y 2 hilos, y vuelca a disco en `data/_tmp/duckdb`;
+  - `maximum_object_size` se ajusta al archivo más grande que se lee (un valor fijo grande agotaba la memoria);
+  - pool `duckdb` de 2 slots para las tareas de Silver.
+
+Insumos para el día 18 (NULL), del paso 4:
+
+- 30 POIs sin prefectura: 7 en las Kuriles del sur (administradas por Rusia, dentro de la bbox de Hokkaidō), 9 en islas del sur como Tokara, y el resto en islas chicas que Natural Earth a 10 m no tiene.
+- Errores de marca en OSM entre Pokémon Center y Store: 3.
+- Estaciones con `lines`: 4 de 9091.
 

@@ -50,11 +50,15 @@ services:
 
   airflow-init:
     <<: *airflow
-    # El pool overpass (1 slot) serializa las consultas a Overpass de atlas_run.
+    # Pools de atlas_run: overpass (1 slot) serializa las consultas a Overpass; duckdb
+    # (2 slots) limita las transformaciones simultáneas, de hasta 2 GB cada una.
     command:
       - bash
       - -c
-      - 'airflow db migrate && airflow pools set overpass 1 "Overpass, una consulta por vez"'
+      - >-
+        airflow db migrate
+        && airflow pools set overpass 1 "Overpass, una consulta por vez"
+        && airflow pools set duckdb 2 "DuckDB, hasta 2 transformaciones a la vez"
     depends_on:
       postgres:
         condition: service_healthy
