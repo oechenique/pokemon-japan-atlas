@@ -101,7 +101,7 @@ Pendiente para la Fase 3:
 
 La partición de Overpass que se había propuesto acá se implementó en el paso 1 de la Fase 2.
 
-**Fase 2 · Silver/Gold: en curso. Pasos 1 a 7 cerrados (2026-10-07); próximo: paso 8 (idempotencia de Silver/Gold y una sola corrida final con `query`).**
+**Fase 2 · Silver/Gold: en curso. Pasos 1 a 7 cerrados (2026-10-07). Paso 8: la corrida final con `query` quedó frenada porque Overpass está caído (ver "Corrida final en pausa", al final).**
 
 Plan aprobado (2026-10-07):
 
@@ -277,3 +277,18 @@ Paso 7 · Gold y `v_day_XX` (corrida `20261007T194212Z`, con `reuse`: 104 tareas
 - Día 5: `fuji_viewshed`, con la definición de "visible" en la columna `method`.
 - El `quality_report` suma el hallazgo `osm_shinkansen_routes`.
 
+Corrida final en pausa (2026-10-07, 23:40Z):
+
+- Corrida `manual__2026-10-07T20:31:52.809251+00:00` (Bronze `run_id=20261007T203152Z`), con `OVERPASS_MODE=query`. Sigue en `running`, con **el DAG `atlas_run` pausado** a propósito.
+- `bronze.fetch_query`: 0 a 44 en `success`; 45 (`osm_overpass:station/kansai_chugoku_shikoku.json`) y 46 (`osm_overpass:station/kyushu.json`) en `failed`, con 4 intentos cada una y `ConnectionRefused`; 47 a 64 en `scheduled`, sin arrancar. Todo lo que viene después (`finish_overpass`, `report`, Silver, `dq_gate` y Gold) está pendiente.
+- Causa: `overpass-api.de` no responde, ni sus dos servidores (162.55.144.139 y 65.109.112.52). Tampoco responde desde el host ni desde otra red, mientras OSM y Wikidata sí. Rechaza conexiones desde las 21:25Z, y desde las 22:55Z ni siquiera acepta: los 45 chequeos de `/api/status` que se hicieron hasta las 23:40Z dieron timeout. No hay memoria ni tamaño de respuesta en juego (sin OOM; las respuestas pesan 2,4 MB y 0,7 MB).
+- El cuelgue de 55 min del intento 3 de la 45 fue el standby de la notebook (21:46:37Z a 22:41:06Z), no la tarea.
+- Arreglo ya commiteado (`e18c811`, CI `37699681825` en verde): chequeo de `/api/status` con `OverpassUnavailable`, y `fetch_query` con 6 reintentos y backoff de hasta 30 min. No se cambió de servidor.
+
+Cómo retomar:
+
+1. Verificar que Overpass responda: `curl -s -o /dev/null -w "%{http_code}" https://overpass-api.de/api/status` tiene que dar `200`.
+2. Tapa abierta o `powercfg /change standby-timeout-ac 0`.
+3. `docker compose exec airflow-scheduler airflow dags unpause atlas_run`.
+4. Clear solo de la 45 y la 46, con sus tareas posteriores, desde la UI: corrida `manual__2026-10-07T20:31:52` → Grid → `bronze.fetch_query`, índices 45 y 46 → Clear, con "Downstream" marcado y sin "Past" ni "Future". No conviene `airflow tasks clear`: filtra por fechas y no por corrida, y con `--only-failed` no limpia las tareas posteriores. Las 0 a 44 no se repiten (cada archivo ya está en Bronze y `run.done()` lo saltea). Las 47 a 64 arrancan solas al despausar.
+5. Al terminar: `quality_report.json`, cierre de la Fase 2 en este archivo, commit, push y CI.
