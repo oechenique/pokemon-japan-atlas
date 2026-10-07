@@ -15,6 +15,13 @@ def _clean_source_env(monkeypatch):
     monkeypatch.delenv("OVERPASS_MODE", raising=False)
 
 
+@pytest.fixture(autouse=True)
+def _isolated_data_dir(monkeypatch, tmp_path_factory):
+    # Ningún test escribe en el data/ real (en CI, además, no es escribible para el
+    # usuario del contenedor): DuckDB vuelca a disco en un directorio temporal.
+    monkeypatch.setenv("ATLAS_DATA_DIR", str(tmp_path_factory.mktemp("data")))
+
+
 @pytest.fixture(scope="session")
 def registry():
     return load_registry()
