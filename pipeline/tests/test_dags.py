@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 
 from airflow.dag_processing.dagbag import DagBag
@@ -32,7 +33,8 @@ def test_atlas_run_splits_overpass_into_a_pooled_mapped_task():
     fetch = dag.get_task("bronze.fetch_query")
     assert fetch.is_mapped
     assert fetch.pool == "overpass"
-    assert fetch.retries == 3
+    assert fetch.retries == 6
+    assert fetch.max_retry_delay == timedelta(minutes=30)
     assert "bronze.overpass_queries" in fetch.upstream_task_ids
     assert "bronze.fetch_query" in dag.get_task("bronze.finish_overpass").upstream_task_ids
     assert "bronze.finish_overpass" in dag.get_task("bronze.report").upstream_task_ids

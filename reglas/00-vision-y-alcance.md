@@ -87,6 +87,8 @@ pokemon-japan-atlas/
 
 **Deadline:** pipeline y front base (fases 0 a 4) listos antes del **1/11/2026**.
 
+**Corrida de publicación:** con margen, no el 31/10. Objetivo: **25/10/2026**, con `OVERPASS_MODE=query` y `overpass.snapshot_date` fijado en `pipeline/sources/registry.yaml`. Así queda tiempo para repetirla si Overpass se cae o falla el DQ gate.
+
 ## Cómo trabajar (para Claude Code)
 
 - Una fase por vez. No adelantes trabajo de fases futuras.

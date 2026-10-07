@@ -3,6 +3,9 @@
 - Una sola instancia (overpass.endpoint), consultas por bbox o around, nunca `area`.
 - Una consulta por vez en todo el contenedor (lock de archivo) y pausa entre consultas.
 - Un `remark` en la respuesta cuenta como falla, aunque venga con HTTP 200.
+- Antes de cada consulta, un chequeo corto de /api/status sin reintentos: si Overpass
+  está caído, la tarea falla enseguida con OverpassUnavailable y los reintentos (con
+  backoff largo) quedan a cargo de Airflow.
 - La respuesta se guarda cruda, salvo osm3s.timestamp_osm_base: cambia cada minuto
   aunque los datos no cambien, así que pasa a metadata.json y el checksum queda
   dependiendo solo de los datos.
@@ -30,6 +33,8 @@ import time
 from collections.abc import Iterator, Sequence
 from pathlib import Path
 
+import requests
+
 from pipeline.sources.base import CHUNK, BronzeRun, FileRecord, IngestError
 
 LOCK_PATH = Path(tempfile.gettempdir()) / "atlas-overpass.lock"
@@ -40,6 +45,8 @@ TIMESTAMP_LINE = re.compile(
 )
 REMARK = re.compile(rb'"remark":\s*"((?:[^"\\]|\\.)*)"')
 TAIL_BYTES = 4096
+# (conexión, lectura) del chequeo de /api/status.
+STATUS_TIMEOUT = (10, 30)
 MODE_ENV = "OVERPASS_MODE"
 MODES = frozenset({"query", "reuse", "reuse_or_query"})
 REUSING = frozenset({"reuse", "reuse_or_query"})
@@ -49,6 +56,10 @@ KINDS = frozenset({"overpass", "overpass_around"})
 
 class OverpassError(IngestError):
     """Overpass respondió con un error (incluido un remark con HTTP 200)."""
+
+
+class OverpassUnavailable(OverpassError):
+    """Overpass no responde a /api/status: el servicio está caído o no hay conexión."""
 
 
 def mode() -> str:
@@ -81,6 +92,25 @@ def build_query(
     return f"{settings};({body});out {out};"
 
 
+def status_url(endpoint: str) -> str:
+    """https://overpass-api.de/api/interpreter → https://overpass-api.de/api/status"""
+    return endpoint.rsplit("/", 1)[0] + "/status"
+
+
+def check_available(endpoint: str, user_agent: str) -> None:
+    """Falla con OverpassUnavailable si /api/status no responde con HTTP 200. Usa
+    requests sin la sesión, para no sumar los reintentos de urllib3: ante una caída,
+    cada intento de la tarea tardaría minutos en fallar."""
+    url = status_url(endpoint)
+    try:
+        response = requests.get(url, headers={"User-Agent": user_agent}, timeout=STATUS_TIMEOUT)
+    except requests.RequestException as exc:
+        raise OverpassUnavailable(f"{url} no responde: {exc}") from exc
+    with response:
+        if response.status_code != 200:
+            raise OverpassUnavailable(f"{url} respondió HTTP {response.status_code}")
+
+
 def fetch(run: BronzeRun, rel: str, query: str) -> FileRecord:
     """Ejecuta una consulta y guarda la respuesta en Bronze (una sola vez por corrida)."""
     if (record := run.done(rel)) is not None:
@@ -90,6 +120,7 @@ def fetch(run: BronzeRun, rel: str, query: str) -> FileRecord:
         return _reuse(run, rel, query)
     config = run.registry.overpass
     with _exclusive(LOCK_PATH):
+        check_available(config["endpoint"], run.session.headers["User-Agent"])
         try:
             response = run.session.post(
                 config["endpoint"],

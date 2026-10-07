@@ -109,12 +109,15 @@ def atlas_run():
             get_current_context()["source_id"] = source_id
             return ingest_source(source_id, atlas_run_id)
 
+        # Más reintentos y más espaciados que ingest: si Overpass se cae, cada intento
+        # falla enseguida (OverpassUnavailable) y la espera entre intentos llega a
+        # 30 min, para aguantar una caída de entre 1 y 1,5 h.
         @task(
             pool=OVERPASS_POOL,
-            retries=3,
+            retries=6,
             retry_delay=timedelta(minutes=1),
             retry_exponential_backoff=True,
-            max_retry_delay=timedelta(minutes=10),
+            max_retry_delay=timedelta(minutes=30),
             # Cubre el timeout de Overpass (180 s) más la descarga; la espera por el
             # slot del pool no cuenta.
             execution_timeout=timedelta(minutes=10),

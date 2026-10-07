@@ -1,10 +1,14 @@
 import json
 
 import pytest
+import requests
 
 from pipeline.sources import _overpass
-from pipeline.sources._overpass import OverpassError, build_query
+from pipeline.sources._overpass import OverpassError, OverpassUnavailable, build_query
 from pipeline.sources.base import BronzeRun, IngestError
+
+# El fixture _no_pause lo reemplaza; los tests del chequeo usan el original.
+CHECK_AVAILABLE = _overpass.check_available
 
 RUN_1 = "20261007T100000Z"
 RUN_2 = "20261007T110000Z"
@@ -46,6 +50,7 @@ class FakeSession:
     def __init__(self, responses):
         self.responses = list(responses)
         self.queries = []
+        self.headers = {"User-Agent": "atlas-test"}
 
     def post(self, url, data, **_kwargs):
         self.queries.append(data["data"])
@@ -56,6 +61,7 @@ class FakeSession:
 def _no_pause(monkeypatch, tmp_path):
     monkeypatch.setattr(_overpass.time, "sleep", lambda _s: None)
     monkeypatch.setattr(_overpass, "LOCK_PATH", tmp_path / "overpass.lock")
+    monkeypatch.setattr(_overpass, "check_available", lambda _endpoint, _agent: None)
 
 
 def _run(registry, make_source, run_id, root, responses):
@@ -294,3 +300,61 @@ def test_finish_fails_when_a_planned_query_is_missing(registry, tmp_path, monkey
     _overpass.fetch_planned(plan[0], RUN_1, registry=registry, root=tmp_path)
     with pytest.raises(IngestError, match="faltan"):
         finish_source("osm_overpass", RUN_1, registry=registry, root=tmp_path)
+
+
+class StatusResponse(FakeResponse):
+    def __init__(self, status: int):
+        super().__init__("Connected as: 1\n", status)
+
+
+def test_status_url_replaces_the_interpreter():
+    assert (
+        _overpass.status_url("https://overpass-api.de/api/interpreter")
+        == "https://overpass-api.de/api/status"
+    )
+
+
+def test_status_ok_lets_the_query_through(monkeypatch):
+    calls = []
+
+    def get(url, **kwargs):
+        calls.append((url, kwargs))
+        return StatusResponse(200)
+
+    monkeypatch.setattr(_overpass.requests, "get", get)
+    CHECK_AVAILABLE("https://overpass-api.de/api/interpreter", "atlas-test")
+    [(url, kwargs)] = calls
+    assert url == "https://overpass-api.de/api/status"
+    assert kwargs["headers"] == {"User-Agent": "atlas-test"}
+    assert kwargs["timeout"] == _overpass.STATUS_TIMEOUT
+
+
+@pytest.mark.parametrize(
+    "error",
+    [requests.ConnectionError("Connection refused"), requests.Timeout("timed out")],
+)
+def test_no_connection_is_unavailable(monkeypatch, error):
+    def get(_url, **_kwargs):
+        raise error
+
+    monkeypatch.setattr(_overpass.requests, "get", get)
+    with pytest.raises(OverpassUnavailable, match="no responde"):
+        CHECK_AVAILABLE("https://overpass-api.de/api/interpreter", "atlas-test")
+
+
+def test_status_error_is_unavailable(monkeypatch):
+    monkeypatch.setattr(_overpass.requests, "get", lambda _url, **_kw: StatusResponse(503))
+    with pytest.raises(OverpassUnavailable, match="HTTP 503"):
+        CHECK_AVAILABLE("https://overpass-api.de/api/interpreter", "atlas-test")
+
+
+def test_unavailable_does_not_query_nor_write(registry, make_source, tmp_path, monkeypatch):
+    def down(_endpoint, _agent):
+        raise OverpassUnavailable("caído")
+
+    monkeypatch.setattr(_overpass, "check_available", down)
+    run = _run(registry, make_source, RUN_1, tmp_path, [FakeResponse(HEADER + BODY)])
+    with pytest.raises(OverpassUnavailable):
+        _overpass.fetch(run, "station/kyushu.json", "[out:json];node;out;")
+    assert run.session.queries == []
+    assert run.done("station/kyushu.json") is None

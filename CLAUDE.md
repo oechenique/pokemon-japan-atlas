@@ -29,6 +29,8 @@ Las reglas de `reglas/` mandan sobre cualquier otra cosa, incluido este archivo:
 - Verificación de `web/`: `npm run lint && npm run typecheck && npm test && npm run build && npm run check:export`.
 - Pipeline: `docker compose up -d` levanta Airflow 3 (LocalExecutor + Postgres) en http://localhost:8080, sin login. La imagen (`pipeline/Dockerfile`) trae DuckDB con `spatial` y `h3` preinstaladas. `atlas_smoke` es el DAG de humo del entorno. `atlas_run` se dispara con `docker compose exec airflow-scheduler airflow dags trigger atlas_run`; el informe de cada corrida queda en `data/bronze/_runs/`.
 - Verificación de `pipeline/` (desde Git Bash, `MSYS_NO_PATHCONV=1` evita que reescriba la ruta): `docker compose run --rm --no-deps -e CONNECTION_CHECK_MAX_COUNT=0 -w /opt/airflow/pipeline airflow-scheduler bash -c "ruff check . && ruff format --check . && pytest"`.
+- Durante una corrida de `atlas_run` con consultas a Overpass, la notebook no se suspende: tapa abierta, o `powercfg /change standby-timeout-ac 0` mientras dure (y después se restaura). En standby, la VM de Docker se congela, el `execution_timeout` no corre y la tarea termina por heartbeat timeout (pasó el 2026-10-07).
+- La corrida de publicación se hace con margen: objetivo **25/10/2026**, no el 31, con `OVERPASS_MODE=query` y `overpass.snapshot_date` fijado (regla 00).
 - CI falla si algún archivo de `publish/` supera 10 MiB.
 - Verificación de `infra/`: `terraform fmt -check && terraform init -backend=false && terraform validate`.
 
