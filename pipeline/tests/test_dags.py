@@ -57,3 +57,11 @@ def test_atlas_run_silver_tasks_follow_dependencies_without_retries():
         assert {f"silver.{u}" for u in upstream} <= task.upstream_task_ids, entity
         assert {o.name for o in task.outlets} == {f"silver.{entity}"}
     assert "bronze.report" in dag.get_task("silver.prefecture").upstream_task_ids
+
+
+def test_dq_gate_runs_after_silver_without_retries():
+    dag = _bag().dags["atlas_run"]
+    gate = dag.get_task("dq_gate")
+    assert gate.retries == 0
+    assert "silver.lineage" in gate.upstream_task_ids
+    assert {o.name for o in gate.outlets} == {"quality_report"}

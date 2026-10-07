@@ -52,6 +52,7 @@ def connect() -> duckdb.DuckDBPyConnection:
     con.execute(f"SET memory_limit = '{MEMORY_LIMIT}'")
     con.execute(f"SET threads = {THREADS}")
     con.execute(f"SET temp_directory = '{spill.as_posix()}'")
+    con.execute("SET enable_progress_bar = false")
     return con
 
 

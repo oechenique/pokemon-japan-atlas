@@ -3,6 +3,10 @@
 /data/*
 !/data/.gitkeep
 
+# Informes del DQ gate de las corridas de desarrollo. Solo se versiona el de la
+# corrida final de publicación, que se habilita con una línea ! propia.
+/publish/*/quality_report.json
+
 # Terraform: state local y caché de providers (el lock file sí se versiona).
 .terraform/
 *.tfstate

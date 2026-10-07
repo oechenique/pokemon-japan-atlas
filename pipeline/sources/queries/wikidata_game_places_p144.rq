@@ -1,0 +1,8 @@
+# Lugares del juego en las 4 regiones japonesas y su P144 (en qué lugar real se basan),
+# si lo tienen. Insumo de cobertura del quality_report (día 18), no de una entidad.
+SELECT DISTINCT ?place ?region ?based_on WHERE {
+  VALUES ?region { wd:Q1657833 wd:Q607459 wd:Q872285 wd:Q603624 }
+  ?place (wdt:P131|wdt:P361|wdt:P706|wdt:P276|wdt:P1080|wdt:P8345) ?region .
+  OPTIONAL { ?place wdt:P144 ?based_on }
+}
+ORDER BY ?region ?place ?based_on

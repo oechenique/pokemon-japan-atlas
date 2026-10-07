@@ -18,7 +18,12 @@ con las dependencias entre entidades, y lineage al final. Sin reintentos: si una
 transformación falla, es un bug (reglas/03). Cada tarea declara como inlets el Bronze
 de las fuentes de su contrato y como outlet su entidad de Silver.
 
-DQ gate, Gold y publicación se suman en los pasos siguientes.
+dq_gate: los checks bloqueantes de los contratos y los cruces con PokeAPI y Wikidata,
+más los informativos y la cobertura de las fuentes, en
+publish/<run_id>/quality_report.json. Si falla un bloqueante, la tarea falla y no hay
+Gold. Sin reintentos.
+
+Gold y publicación se suman en los pasos siguientes.
 """
 
 from __future__ import annotations
@@ -45,6 +50,7 @@ SILVER_ASSETS = {
     for entity in DEPENDENCIES
 }
 CONTRACTS = load_contracts()
+QUALITY_ASSET = Asset(name="quality_report", uri="file:///opt/airflow/publish/quality_report")
 
 
 @dag(
@@ -53,7 +59,7 @@ CONTRACTS = load_contracts()
     start_date=pendulum.datetime(2026, 1, 1, tz="UTC"),
     catchup=False,
     max_active_runs=1,
-    tags=["bronze", "silver"],
+    tags=["bronze", "silver", "dq"],
 )
 def atlas_run():
     @task(inlets=[REGISTRY_ASSET])
@@ -162,8 +168,14 @@ def atlas_run():
 
         lineage(atlas_run_id, list(built.values()))
 
+    @task(retries=0, pool=DUCKDB_POOL, inlets=list(SILVER_ASSETS.values()), outlets=[QUALITY_ASSET])
+    def dq_gate(atlas_run_id: str) -> dict:
+        from pipeline.quality.gate import run_gate
+
+        return run_gate(atlas_run_id)
+
     run_id = start_run()
-    bronze(run_id) >> silver(run_id)
+    bronze(run_id) >> silver(run_id) >> dq_gate(run_id)
 
 
 atlas_run()

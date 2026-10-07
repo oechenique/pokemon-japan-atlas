@@ -99,7 +99,7 @@ Pendiente para la Fase 3:
 
 La partición de Overpass que se había propuesto acá se implementó en el paso 1 de la Fase 2.
 
-**Fase 2 · Silver/Gold: en curso. Pasos 1 a 5 cerrados (2026-10-07); próximo: paso 6 (DQ gate y `quality_report.json`), con `OVERPASS_MODE=reuse`.**
+**Fase 2 · Silver/Gold: en curso. Pasos 1 a 6 cerrados (2026-10-07); próximo: paso 7 (Gold y `v_day_XX`), con `OVERPASS_MODE=reuse`.**
 
 Plan aprobado (2026-10-07):
 
@@ -221,4 +221,37 @@ Paso 5 · Rasters y H3 (corrida `20261007T182906Z`, con `reuse`):
   - `poi_density`: 254 celdas de resolución 7.
   - `shinkansen_sound_proxy`: 46 887 celdas de resolución 9 a 2 anillos o menos de la vía, con `is_proxy`.
 - Prueba de `gdal_viewshed` sobre un caso chico de resultado conocido: una llanura con un muro de 50 m.
+
+Para el texto del día 5 (Fase 5): definición de "visible" que usa la cuenca visual. Un punto ve el Fuji si ve la cumbre o algún punto del cono superior:
+
+- 9 observadores: el punto más alto del DEM cerca de Kengamine y 8 a 1 km de él, en todas las direcciones;
+- observador y objetivo a 1,7 m;
+- hasta 200 km, con curvatura y refracción (-cc 0,85714);
+- DEM Copernicus GLO-90 (90 m, de superficie: edificios y bosques tapan);
+- es un cálculo geométrico: no tiene en cuenta el clima ni la bruma.
+
+Paso 6 · DQ gate (corrida `20261007T185143Z`, con `reuse`): `pipeline/quality/gate.py`, tarea `dq_gate` sin reintentos.
+
+- Bloqueantes (239 en verde), salidos de los contratos:
+  - esquema, no nulos, clave primaria, `pattern`, `allowed` y `range`;
+  - geometría válida y del tipo del contrato;
+  - dentro del bbox de Japón (para H3, el centro de la celda);
+  - conteos, también por categoría;
+  - cruces de generación (PokeAPI) y de año (Wikidata) en `game_region` y `outside_region`.
+- Informativos:
+  - nulos por columna y por prefectura;
+  - variación de conteos contra el informe anterior;
+  - estadísticas de Silver;
+  - modo de cada fuente de Bronze, incluido `overpass_mode`, para la Fase 3.
+- Sección `coverage` (insumo del día 18):
+  - Wikidata `P144`: 6 de 179 lugares (la consulta del pipeline; el "5 de 158" de antes era un conteo a mano) y 7 de 9 regiones.
+  - Café de Osaka sin `brand` (1 de 2) y errores de marca entre Center y Store (3).
+  - Estaciones con línea (4 de 9091); edificios con altura (41) y con pisos (237).
+  - 32 puntos sin prefectura: 7 en las Kuriles y 25 en islas.
+  - Poké Lids: 257 de unas 400 según Wikipedia (junio de 2025). Hay conteos de 2026 no verificados de unas 481.
+  - Platos regionales: 34 de 47 prefecturas, ninguno en Hokkaidō.
+  - Luz nocturna NULL: 151 celdas.
+- Bronze nuevo para la cobertura: consultas `game_places_p144` y `regional_dishes`, y seed `coverage_references.csv`.
+- `basemap` (29 402 elementos, 45 MB): se construyó en este paso porque el gate detectó que faltaba. Se excluye "Null island", el elemento ficticio de Natural Earth en 0°, 0° (2 filas, que también sirven para el día 18).
+- `.gitignore` excluye `publish/*/quality_report.json`. El de la corrida final se habilita con una línea `!` propia.
 

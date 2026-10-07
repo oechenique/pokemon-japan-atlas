@@ -1,0 +1,14 @@
+# Platos y comidas de Japón (P495) y la prefectura con la que Wikidata los vincula, si la
+# hay. Insumo de cobertura del quality_report (día 18): el día 23 no los usa porque no
+# cubren Hokkaidō.
+SELECT DISTINCT ?dish ?iso WHERE {
+  VALUES ?cls { wd:Q746549 wd:Q2095 wd:Q1778821 wd:Q19861951 }
+  ?dish wdt:P31 ?cls ; wdt:P495 wd:Q17 .
+  OPTIONAL {
+    VALUES ?prop { wdt:P2341 wdt:P1071 wdt:P131 wdt:P276 wdt:P361 }
+    ?dish ?prop ?place .
+    ?place wdt:P131* ?pref .
+    ?pref wdt:P31 wd:Q50337 ; wdt:P300 ?iso .
+  }
+}
+ORDER BY ?dish ?iso

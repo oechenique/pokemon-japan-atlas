@@ -178,6 +178,11 @@ sources:
         # Fecha de los primeros juegos de cada generación (año de cada región).
         - id: generation_games
           file: queries/wikidata_generation_games.rq
+        # Insumos de cobertura del quality_report (día 18), no de entidades.
+        - id: game_places_p144
+          file: queries/wikidata_game_places_p144.rq
+        - id: regional_dishes
+          file: queries/wikidata_regional_dishes.rq
 
   - id: pokeapi
     kind: rest_json
@@ -298,6 +303,10 @@ sources:
         - name: prefecture_regions
           file: prefecture_regions.csv
           required_columns: [prefecture_code, real_region, source_url]
+        # Totales de referencia para medir cobertura en el quality_report (día 18).
+        - name: coverage_references
+          file: coverage_references.csv
+          required_columns: [reference_id, value, as_of, source_url]
         # Las 5 regiones fuera de Japón con su fuente por fila. Galar y Paldea no tienen
         # P144 en Wikidata; Unova, Kalos y Alola sí, pero acá llevan su fuente oficial.
         # La consulta game_regions_based_on queda como respaldo y control.

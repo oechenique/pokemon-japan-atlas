@@ -272,3 +272,13 @@ def test_building_ways_and_multipolygon_with_hole(tmp_path, con):
     assert rows["osm:way/31"][0] == 12.0
     assert rows["osm:relation/30"][:2] == (187.0, 52)
     assert rows["osm:relation/30"][2] < 0.97 * rows["osm:way/31"][2]
+
+
+def test_basemap_layers_match_the_contract():
+    from pipeline.quality.contracts import load_contracts
+    from pipeline.transforms.silver import basemap
+
+    allowed = set(load_contracts()["basemap"].column("layer").allowed)
+    assert set(basemap.LAYERS) | {"bathymetry"} == allowed
+    assert basemap._geometry("geom", 1) == "geom"
+    assert "ST_CollectionExtract(ST_MakeValid(geom), 3)" == basemap._geometry("geom", 3)
