@@ -23,6 +23,8 @@ DEPENDENCIES: dict[str, tuple[str, ...]] = {
     "rail": (),
     "station": ("prefecture",),
     "building": (),
+    "raster_product": (),
+    "h3_metric": ("prefecture", "poi", "rail"),
 }
 
 

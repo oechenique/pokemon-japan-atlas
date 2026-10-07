@@ -99,7 +99,7 @@ Pendiente para la Fase 3:
 
 La partición de Overpass que se había propuesto acá se implementó en el paso 1 de la Fase 2.
 
-**Fase 2 · Silver/Gold: en curso. Pasos 1 a 4 cerrados (2026-10-07); próximo: paso 5 (rasters y H3), con `OVERPASS_MODE=reuse`.**
+**Fase 2 · Silver/Gold: en curso. Pasos 1 a 5 cerrados (2026-10-07); próximo: paso 6 (DQ gate y `quality_report.json`), con `OVERPASS_MODE=reuse`.**
 
 Plan aprobado (2026-10-07):
 
@@ -192,4 +192,33 @@ Insumos para el día 18 (NULL), del paso 4:
 - 30 POIs sin prefectura: 7 en las Kuriles del sur (administradas por Rusia, dentro de la bbox de Hokkaidō), 9 en islas del sur como Tokara, y el resto en islas chicas que Natural Earth a 10 m no tiene.
 - Errores de marca en OSM entre Pokémon Center y Store: 3.
 - Estaciones con `lines`: 4 de 9091.
+
+Pendiente para el paso 7 (Gold), pedido por el usuario el 2026-10-07:
+
+- Día 12: las 19 885 centrales son demasiado ruido. Filtrar por `plant:source` (nuclear, hydro, coal/gas/oil), o por capacidad cuando exista, y dejar las solares chicas fuera de la vista del día.
+- Día 24: asignar las estaciones a la línea del Shinkansen por proximidad espacial, porque casi no hay tags de línea.
+- Kuriles del sur: documentar en el README (Fase 6) que se sigue la representación de Natural Earth (control de hecho) y que esos puntos quedan sin prefectura.
+
+Paso 5 · Rasters y H3 (corrida `20261007T182906Z`, con `reuse`):
+
+- Imagen:
+  - `gdal-bin` de Debian, que se usa solo por subprocess para `gdal_viewshed`. Es GDAL 3.13.2, separado del 3.12.2 de rasterio.
+  - pyarrow 25.0.1 fijado, para pasar los píxeles de numpy a DuckDB.
+- `raster_product` (10 productos): COG en `data/silver/rasters/` (197 MB).
+  - 5 DEM.
+  - 4 relieves sombreados (Horn, con el tamaño de píxel en metros calculado fila por fila).
+  - La cuenca visual del Fuji (día 5):
+    - por reciprocidad, con observador y objetivo a 1,7 m, curvatura y refracción, hasta 200 km, sobre el DEM reproyectado a UTM 54N;
+    - "se ve el Fuji" = se ve la cumbre o el cono superior: 9 observadores (el punto más alto cerca de Kengamine y 8 a 1 km);
+    - con uno solo, la meseta de la cumbre tapaba vistas clásicas, como la del lago Kawaguchi;
+    - resultado: se ve desde el 34,8% del área.
+- `h3_metric` (1 003 036 filas):
+  - `population`: Kontur en resolución 8, más la suma a resolución 7. Total 123,3 millones.
+  - `night_light`: VIIRS en resoluciones 8 y 7.
+    - La máscara de tierra son las prefecturas más las celdas pobladas de Kontur que quedan fuera de ellas (8429; Ogasawara, por ejemplo).
+    - Un píxel cuenta si no es relleno y su calidad no es 255; la calidad 1 se incluye y se informa en `poor_quality_share`.
+    - `value` es NULL cuando la celda no tiene ningún píxel válido: 151 celdas de resolución 8, entre ellas Chichijima.
+  - `poi_density`: 254 celdas de resolución 7.
+  - `shinkansen_sound_proxy`: 46 887 celdas de resolución 9 a 2 anillos o menos de la vía, con `is_proxy`.
+- Prueba de `gdal_viewshed` sobre un caso chico de resultado conocido: una llanura con un muro de 50 m.
 

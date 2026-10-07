@@ -9,6 +9,8 @@ requests==2.34.2
 numpy==2.5.3
 rasterio==1.5.2
 h5py==3.16.0
+# Pasa los píxeles de los rasters de numpy a DuckDB para agregarlos a H3.
+pyarrow==25.0.1
 
 # Herramientas de verificación (CI y local corren dentro de la misma imagen).
 pytest==9.1.1

@@ -3,6 +3,12 @@
 ARG AIRFLOW_VERSION=3.3.2
 FROM apache/airflow:slim-${AIRFLOW_VERSION}-python3.12
 
+# gdal-bin solo para gdal_viewshed (cuenca visual del Fuji), que se llama por
+# subprocess. Es el GDAL de Debian, separado del que trae rasterio.
+USER root
+RUN apt-get update  && apt-get install -y --no-install-recommends gdal-bin  && rm -rf /var/lib/apt/lists/*
+USER airflow
+
 ARG AIRFLOW_VERSION
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir \

@@ -11,7 +11,8 @@ geometry:
 count: {min: 100000}
 count_by:
   column: metric
-  min: {population: 50000, night_light: 50000, poi_density: 1000, shinkansen_sound_proxy: 1000}
+  # poi_density: hay unos 290 puntos Pokémon, así que no puede haber más celdas que eso.
+  min: {population: 50000, night_light: 50000, poi_density: 100, shinkansen_sound_proxy: 1000}
 columns:
   - {name: h3, type: VARCHAR, nullable: false, pattern: '^[0-9a-f]{15}$'}
   - {name: resolution, type: INTEGER, nullable: false, range: [7, 9]}
