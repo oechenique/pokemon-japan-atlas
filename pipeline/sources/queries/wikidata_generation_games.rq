@@ -1,0 +1,20 @@
+# Fecha de lanzamiento (P577) de los primeros juegos de cada generación: da el año de
+# las regiones fuera de Japón y sirve para cruzar el del seed game_regions.
+# Solo fechas reales: algunos ítems tienen "valor desconocido" en P577.
+SELECT ?generation ?game (MIN(?date) AS ?first_release) WHERE {
+  VALUES (?generation ?game) {
+    (1 wd:Q91030617)   # Pokémon Red and Green
+    (2 wd:Q837346)     # Pokémon Gold and Silver
+    (3 wd:Q721822)     # Pokémon Ruby and Sapphire
+    (4 wd:Q645494)     # Pokémon Diamond and Pearl
+    (5 wd:Q816034)     # Pokémon Black and White
+    (6 wd:Q2769164)    # Pokémon X and Y
+    (7 wd:Q22954794)   # Pokémon Sun and Moon
+    (8 wd:Q61897498)   # Pokémon Sword and Shield
+    (9 wd:Q111028839)  # Pokémon Scarlet and Violet
+  }
+  ?game wdt:P577 ?date .
+  FILTER(DATATYPE(?date) = xsd:dateTime)
+}
+GROUP BY ?generation ?game
+ORDER BY ?generation

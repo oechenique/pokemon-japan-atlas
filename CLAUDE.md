@@ -99,7 +99,7 @@ Pendiente para la Fase 3:
 
 La partición de Overpass que se había propuesto acá se implementó en el paso 1 de la Fase 2.
 
-**Fase 2 · Silver/Gold: en curso. Pasos 1 y 2 cerrados (2026-10-07); próximo: paso 3 (Silver base), con `OVERPASS_MODE=reuse`.**
+**Fase 2 · Silver/Gold: en curso. Pasos 1 a 3 cerrados (2026-10-07); próximo: paso 4 (Silver vectorial), con `OVERPASS_MODE=reuse`.**
 
 Plan aprobado (2026-10-07):
 
@@ -147,4 +147,21 @@ Paso 2 · Contratos:
 - El validador está en `pipeline/quality/contracts.py`. Exige `license` no nulable en todas las entidades y controla que contratos y `feeds` del registro coincidan en los dos sentidos.
 - Mínimos por categoría: alrededor del 80% de Bronze al 2026-10-07. En Bronze hay 22 Pokémon Center, 9 Pokémon Store, 257 Poké Lids, 1022 onsen y 19885 centrales.
 - Pokémon Café: en OSM, solo uno tiene `brand`, así que los dos entran por el seed (mínimo 2).
+
+Paso 3 · Silver base (corrida `20261007T174238Z`, con `reuse`):
+
+- Base de transformación en `pipeline/transforms/base.py`:
+  - lee Bronze de una sola corrida y solo de fuentes completas;
+  - escribe `data/silver/<entidad>.parquet` con las columnas, el orden y los tipos del contrato (CAST explícito), ordenado por la clave primaria;
+  - la geometría queda etiquetada como `OGC:CRS84`, que es EPSG:4326 en orden lon/lat;
+  - controla el esquema escrito contra el contrato.
+- El `run_id` no va dentro del parquet, para que el hash no cambie entre corridas. El linaje queda en `data/silver/_runs/`.
+- `atlas_run` suma el grupo `silver`: una tarea por entidad (`silver_entities.DEPENDENCIES`) sin reintentos, con el Bronze de su contrato como inlets, más `lineage`.
+- Entidades:
+  - `prefecture` (47): Natural Earth más nombres de Wikidata. Saga y Nagasaki toman la región del seed `prefecture_regions.csv`, porque ni Natural Earth ni Wikidata (`P361`) la traen.
+  - `game_region` (4): unión de prefecturas. Su `confidence` es la más baja entre sus filas, así que Johto queda `ampliamente aceptada`.
+  - `game_place` (40).
+  - `outside_region` (5): generación de PokeAPI y año desde la consulta nueva `generation_games` (fecha de los primeros juegos, solo fechas reales).
+- Unova, Kalos y Alola salen solo de Wikidata `P144`, así que por la regla de los dos grupos quedan como `teoría de fans` hasta sumar otra fuente.
+- Paldea está `ampliamente aceptada` con Wikipedia como única cita. Con la regla de grupos debería ser `teoría de fans`: pendiente de decisión del usuario.
 

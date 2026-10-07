@@ -1,8 +1,9 @@
 entity: outside_region
 description: >-
   Regiones del juego fuera de Japón, como un punto en el lugar real que las inspiró
-  (tarjeta "Fuera de Japón"). Wikidata P144 más el seed regions_outside_japan.
-sources: [wikidata, seeds]
+  (tarjeta "Fuera de Japón"). Wikidata P144 más el seed regions_outside_japan; la
+  generación sale de PokeAPI y el año, de la fecha de los primeros juegos (Wikidata).
+sources: [wikidata, seeds, pokeapi]
 primary_key: [region_id]
 geometry:
   types: [POINT]

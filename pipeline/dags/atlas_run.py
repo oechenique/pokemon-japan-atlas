@@ -12,7 +12,13 @@ TaskGroup bronze:
   consulta por vez en todo Airflow, más la pausa entre consultas. finish_overpass
   cierra las dos fuentes y falla si falta cualquier archivo del plan.
 - report: el informe de la corrida en data/bronze/_runs/.
-Silver, DQ gate, Gold y publicación se suman en las fases siguientes.
+
+TaskGroup silver: una tarea por entidad (pipeline/transforms/silver_entities.py),
+con las dependencias entre entidades, y lineage al final. Sin reintentos: si una
+transformación falla, es un bug (reglas/03). Cada tarea declara como inlets el Bronze
+de las fuentes de su contrato y como outlet su entidad de Silver.
+
+DQ gate, Gold y publicación se suman en los pasos siguientes.
 """
 
 from __future__ import annotations
@@ -22,15 +28,22 @@ from datetime import timedelta
 import pendulum
 from airflow.sdk import Asset, dag, get_current_context, task, task_group
 
+from pipeline.quality.contracts import load_contracts
 from pipeline.sources.registry import REGISTRY_PATH, load_registry
+from pipeline.transforms.silver_entities import DEPENDENCIES
 
 DATA_URI = "file:///opt/airflow/data"
 REGISTRY_ASSET = Asset(name="registry", uri=f"file://{REGISTRY_PATH.as_posix()}")
 OVERPASS_POOL = "overpass"
-BRONZE_ASSETS = [
-    Asset(name=f"bronze.{source_id}", uri=f"{DATA_URI}/bronze/{source_id}")
+BRONZE_ASSETS = {
+    source_id: Asset(name=f"bronze.{source_id}", uri=f"{DATA_URI}/bronze/{source_id}")
     for source_id in load_registry().ids
-]
+}
+SILVER_ASSETS = {
+    entity: Asset(name=f"silver.{entity}", uri=f"{DATA_URI}/silver/{entity}.parquet")
+    for entity in DEPENDENCIES
+}
+CONTRACTS = load_contracts()
 
 
 @dag(
@@ -39,7 +52,7 @@ BRONZE_ASSETS = [
     start_date=pendulum.datetime(2026, 1, 1, tz="UTC"),
     catchup=False,
     max_active_runs=1,
-    tags=["bronze"],
+    tags=["bronze", "silver"],
 )
 def atlas_run():
     @task(inlets=[REGISTRY_ASSET])
@@ -108,7 +121,7 @@ def atlas_run():
                 if s.kind in KINDS
             ]
 
-        @task(outlets=BRONZE_ASSETS)
+        @task(outlets=list(BRONZE_ASSETS.values()))
         def report(atlas_run_id: str, summaries: list[dict], overpass: list[dict]) -> dict:
             from pipeline.sources.base import write_run_report
 
@@ -118,7 +131,37 @@ def atlas_run():
         fetched = fetch_query.partial(atlas_run_id=atlas_run_id).expand(item=overpass_queries())
         report(atlas_run_id, summaries, finish_overpass(atlas_run_id, fetched))
 
-    bronze(start_run())
+    @task_group(group_id="silver")
+    def silver(atlas_run_id: str):
+        def silver_task(entity: str):
+            @task(
+                task_id=entity,
+                retries=0,
+                inlets=[BRONZE_ASSETS[s] for s in CONTRACTS[entity].sources],
+                outlets=[SILVER_ASSETS[entity]],
+            )
+            def build(atlas_run_id: str) -> dict:
+                from pipeline.transforms.silver_entities import build_entity
+
+                return build_entity(entity, atlas_run_id)
+
+            return build
+
+        built = {entity: silver_task(entity)(atlas_run_id) for entity in DEPENDENCIES}
+        for entity, upstream in DEPENDENCIES.items():
+            for dependency in upstream:
+                built[dependency] >> built[entity]
+
+        @task(retries=0)
+        def lineage(atlas_run_id: str, summaries: list[dict]) -> dict:
+            from pipeline.transforms.base import write_run_lineage
+
+            return write_run_lineage(atlas_run_id, summaries)
+
+        lineage(atlas_run_id, list(built.values()))
+
+    run_id = start_run()
+    bronze(run_id) >> silver(run_id)
 
 
 atlas_run()

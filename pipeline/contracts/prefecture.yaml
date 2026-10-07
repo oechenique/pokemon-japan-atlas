@@ -1,6 +1,6 @@
 entity: prefecture
 description: Las 47 prefecturas de Japón, con nombres en ja/en/es y su región real.
-sources: [natural_earth, wikidata]
+sources: [natural_earth, wikidata, seeds]
 primary_key: [prefecture_code]
 geometry:
   types: [POLYGON, MULTIPOLYGON]
@@ -15,8 +15,8 @@ columns:
     type: VARCHAR
     nullable: false
     allowed: [Hokkaido, Tohoku, Kanto, Chubu, Kinki, Chugoku, Shikoku, Kyushu, Okinawa]
-  # natural_earth, o wikidata cuando Natural Earth la deja vacía.
-  - {name: real_region_source, type: VARCHAR, nullable: false, allowed: [natural_earth, wikidata]}
+  # natural_earth, o el seed prefecture_regions cuando Natural Earth la deja vacía.
+  - {name: real_region_source, type: VARCHAR, nullable: false, allowed: [natural_earth, seed]}
   - {name: wikidata, type: VARCHAR, nullable: false, pattern: '^Q\d+$'}
   - {name: area_km2, type: DOUBLE, nullable: false, range: [1, 100000]}
   - {name: license, type: VARCHAR, nullable: false}
