@@ -1,0 +1,22 @@
+entity: raster_product
+description: >-
+  Rasters derivados del DEM GLO-90: recortes en COG, relieve sombreado y cuenca visual
+  del Fuji. Silver guarda la referencia al archivo; el front nunca carga rasters.
+sources: [copernicus_dem]
+primary_key: [product_id]
+geometry:
+  types: [POLYGON]
+  inside_japan: true
+count: {min: 10}
+columns:
+  - {name: product_id, type: VARCHAR, nullable: false, pattern: '^[a-z][a-z0-9_]*$'}
+  - {name: kind, type: VARCHAR, nullable: false, allowed: [dem, hillshade, viewshed]}
+  - {name: aoi, type: VARCHAR, nullable: false}
+  - {name: path, type: VARCHAR, nullable: false, pattern: '^rasters/.+\.tif$'}
+  - {name: width, type: INTEGER, nullable: false, range: [1, 100000]}
+  - {name: height, type: INTEGER, nullable: false, range: [1, 100000]}
+  - {name: sha256, type: VARCHAR, nullable: false, pattern: '^[0-9a-f]{64}$'}
+  - {name: notice, type: VARCHAR, nullable: false}
+  - {name: license, type: VARCHAR, nullable: false}
+  # Extensión del raster como polígono.
+  - {name: geometry, type: GEOMETRY, nullable: false}

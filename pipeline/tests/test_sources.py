@@ -49,6 +49,28 @@ def test_repo_seed_is_valid(registry):
         assert seeds.validate_seed(data, item["required_columns"]) == [], item["name"]
 
 
+def test_game_places_are_in_japan_and_in_a_known_region(registry):
+    import csv
+
+    from pipeline.sources.registry import JAPAN_EXTENT
+
+    regions = {"kanto", "johto", "hoenn", "sinnoh"}
+    path = seeds.PIPELINE_DIR / "seeds" / "game_places.csv"
+    rows = list(csv.DictReader(path.open(encoding="utf-8")))
+    assert rows
+    south, west, north, east = JAPAN_EXTENT
+    for row in rows:
+        assert row["region_id"] in regions, row["place_id"]
+        assert south <= float(row["lat"]) <= north and west <= float(row["lon"]) <= east
+        assert row["real_place_wikidata"].startswith("Q")
+        assert row["confidence"] in seeds.CONFIDENCE
+    # Ninguna fila cita wikis de fans; las de prensa nunca pasan de "ampliamente aceptada".
+    press = ("thegamer.com", "gamerant.com", "cbr.com")
+    for row in rows:
+        if row["source_url"].split("/")[2].removeprefix("www.") in press:
+            assert row["confidence"] != "oficial", row["place_id"]
+
+
 def test_repo_seed_covers_the_four_japanese_regions(registry):
     data = (seeds.PIPELINE_DIR / "seeds" / "game_regions.csv").read_text(encoding="utf-8")
     regions = {line.split(",")[0] for line in data.splitlines()[1:]}
@@ -83,7 +105,7 @@ def test_seeds_ingest_copies_the_csv(registry, tmp_path):
     run = BronzeRun(registry, registry.get("seeds"), RUN_1, tmp_path)
     seeds.ingest(run)
     summary = run.finish()
-    assert summary["files"] == 1
+    assert summary["files"] == len(registry.get("seeds").params["files"])
     assert (run.dir / "game_regions.csv").read_bytes() == (
         seeds.PIPELINE_DIR / "seeds" / "game_regions.csv"
     ).read_bytes()
@@ -100,3 +122,75 @@ def test_pokeapi_rejects_responses_with_images(tmp_path):
     part.write_bytes(b'{"sprites": {"front_default": "https://x/1.png"}}')
     with pytest.raises(IngestError, match="imágenes"):
         pokeapi._no_images(part, None)
+
+
+def test_other_sources_follow_the_same_rules():
+    header = HEADER.rstrip("\n") + ",other_sources\n"
+    row = GOOD_ROW.rstrip("\n") + ",https://bulbapedia.bulbagarden.net/wiki/Kanto\n"
+    errors = seeds.validate_seed((header + row).encode(), COLUMNS)
+    assert any("Bulbapedia" in e for e in errors), errors
+
+
+GROUPED_HEADER = HEADER.rstrip("\n") + ",other_sources,source_groups\n"
+TG = "https://www.thegamer.com/x/"
+GR = "https://gamerant.com/y/"
+WD = "https://www.wikidata.org/wiki/Q1#P144"
+
+
+def _grouped_row(confidence, source, others, groups):
+    row = GOOD_ROW.replace("ampliamente aceptada", confidence)
+    row = row.replace("https://www.wikidata.org/wiki/Q1657833#P144", source)
+    return row.rstrip("\n") + f",{others},{groups}\n"
+
+
+def test_publisher_groups():
+    assert seeds.publisher_group(TG) == seeds.publisher_group(GR) == "valnet"
+    assert (
+        seeds.publisher_group("https://web.archive.org/web/2019/https://www.pokemon.com/x")
+        == "oficial"
+    )
+    assert seeds.publisher_group("https://example.com/") is None
+
+
+@pytest.mark.parametrize(
+    ("row", "error"),
+    [
+        # Dos medios de Valnet son un solo grupo.
+        (_grouped_row("ampliamente aceptada", TG, GR, "valnet"), "dos grupos"),
+        (_grouped_row("ampliamente aceptada", TG, WD, "valnet"), "no coincide"),
+        (
+            _grouped_row("teoría de fans", "https://example.com/a", "", "otro"),
+            "sin grupo editorial",
+        ),
+    ],
+)
+def test_publisher_group_rule(row, error):
+    errors = seeds.validate_seed((GROUPED_HEADER + row).encode(), COLUMNS)
+    assert any(error in e for e in errors), errors
+
+
+def test_publisher_group_rule_accepts_two_groups():
+    row = _grouped_row("ampliamente aceptada", TG, WD, "valnet wikidata")
+    assert seeds.validate_seed((GROUPED_HEADER + row).encode(), COLUMNS) == []
+
+
+def test_repo_game_places_follow_the_group_rule():
+    import csv
+
+    path = seeds.PIPELINE_DIR / "seeds" / "game_places.csv"
+    rows = list(csv.DictReader(path.open(encoding="utf-8")))
+    for row in rows:
+        if row["confidence"] == "ampliamente aceptada":
+            assert len(row["source_groups"].split()) >= 2, row["place_id"]
+
+
+def test_pokemon_cafes_seed_has_both_cafes_with_official_source():
+    import csv
+
+    path = seeds.PIPELINE_DIR / "seeds" / "pokemon_cafes.csv"
+    rows = {r["cafe_id"]: r for r in csv.DictReader(path.open(encoding="utf-8"))}
+    assert set(rows) == {"pokemon_cafe_tokyo", "pokemon_cafe_osaka"}
+    for row in rows.values():
+        assert row["source_url"].startswith("https://shop.pokemon.co.jp/")
+        assert row["confidence"] == "oficial"
+        assert row["coords_osm"].startswith("osm:node/")

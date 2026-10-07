@@ -1,0 +1,27 @@
+entity: outside_region
+description: >-
+  Regiones del juego fuera de Japón, como un punto en el lugar real que las inspiró
+  (tarjeta "Fuera de Japón"). Wikidata P144 más el seed regions_outside_japan.
+sources: [wikidata, seeds]
+primary_key: [region_id]
+geometry:
+  types: [POINT]
+  inside_japan: false
+count: {min: 5, max: 5}
+columns:
+  - name: region_id
+    type: VARCHAR
+    nullable: false
+    allowed: [unova, kalos, alola, galar, paldea]
+  - {name: game_name, type: VARCHAR, nullable: false}
+  - {name: generation, type: INTEGER, nullable: false, range: [5, 9]}
+  - {name: year, type: INTEGER, nullable: false, range: [2010, 2022]}
+  - {name: real_place, type: VARCHAR, nullable: false}
+  - {name: real_place_wikidata, type: VARCHAR, nullable: false, pattern: '^Q\d+$'}
+  - name: confidence
+    type: VARCHAR
+    nullable: false
+    allowed: [oficial, ampliamente aceptada, teoría de fans]
+  - {name: source_url, type: VARCHAR, nullable: false, pattern: '^https://'}
+  - {name: license, type: VARCHAR, nullable: false}
+  - {name: geometry, type: GEOMETRY, nullable: false}

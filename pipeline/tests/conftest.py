@@ -8,6 +8,13 @@ import pytest
 from pipeline.sources.registry import load_registry
 
 
+@pytest.fixture(autouse=True)
+def _clean_source_env(monkeypatch):
+    # El contenedor trae el .env del usuario (por ejemplo OVERPASS_MODE=reuse): los tests
+    # parten siempre del default y fijan lo que necesiten.
+    monkeypatch.delenv("OVERPASS_MODE", raising=False)
+
+
 @pytest.fixture(scope="session")
 def registry():
     return load_registry()

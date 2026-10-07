@@ -1,0 +1,28 @@
+entity: game_place
+description: Lugares del juego y el lugar real que los inspiró (día 8), desde el seed game_places.
+sources: [seeds]
+primary_key: [place_id]
+geometry:
+  types: [POINT]
+  inside_japan: true
+count: {min: 30}
+columns:
+  - {name: place_id, type: VARCHAR, nullable: false, pattern: '^[a-z][a-z0-9_]*$'}
+  - {name: game_name, type: VARCHAR, nullable: false}
+  - {name: region_id, type: VARCHAR, nullable: false, allowed: [kanto, johto, hoenn, sinnoh]}
+  - {name: real_place, type: VARCHAR, nullable: false}
+  - {name: real_place_wikidata, type: VARCHAR, nullable: false, pattern: '^Q\d+$'}
+  - {name: prefecture_code, type: VARCHAR, nullable: false, pattern: '^JP-\d{2}$'}
+  - name: confidence
+    type: VARCHAR
+    nullable: false
+    allowed: [oficial, ampliamente aceptada, teoría de fans]
+  - {name: source_url, type: VARCHAR, nullable: false, pattern: '^https://'}
+  - {name: other_sources, type: 'VARCHAR[]', nullable: false}
+  - {name: notes, type: VARCHAR, nullable: true}
+  - {name: h3_r7, type: VARCHAR, nullable: false, pattern: '^[0-9a-f]{15}$'}
+  - {name: h3_r9, type: VARCHAR, nullable: false, pattern: '^[0-9a-f]{15}$'}
+  - {name: license, type: VARCHAR, nullable: false}
+  - {name: geometry, type: GEOMETRY, nullable: false}
+null_report:
+  columns: [notes]

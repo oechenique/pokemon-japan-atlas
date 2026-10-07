@@ -1,0 +1,34 @@
+entity: h3_metric
+description: >-
+  Métricas por celda H3 sobre tierra de Japón: población (Kontur), luz nocturna
+  (VIIRS), densidad de puntos Pokémon y el proxy de sonido del Shinkansen.
+sources: [kontur_population, viirs_night, osm_overpass]
+primary_key: [h3, metric]
+# Sin columna de geometría: la celda es la geometría. El check de Japón usa su centro.
+geometry:
+  types: []
+  inside_japan: true
+count: {min: 100000}
+count_by:
+  column: metric
+  min: {population: 50000, night_light: 50000, poi_density: 1000, shinkansen_sound_proxy: 1000}
+columns:
+  - {name: h3, type: VARCHAR, nullable: false, pattern: '^[0-9a-f]{15}$'}
+  - {name: resolution, type: INTEGER, nullable: false, range: [7, 9]}
+  - name: metric
+    type: VARCHAR
+    nullable: false
+    allowed: [population, night_light, poi_density, shinkansen_sound_proxy]
+  # NULL = sin dato (por ejemplo, todos los píxeles de VIIRS con relleno). Nunca 0.
+  - {name: value, type: DOUBLE, nullable: true}
+  # Fracción de píxeles válidos en la celda (VIIRS); NULL en las demás métricas.
+  - {name: coverage, type: DOUBLE, nullable: true, range: [0, 1]}
+  # Fracción de píxeles de calidad 1 ("pobre") entre los válidos (VIIRS).
+  - {name: poor_quality_share, type: DOUBLE, nullable: true, range: [0, 1]}
+  - {name: prefecture_code, type: VARCHAR, nullable: true, pattern: '^JP-\d{2}$'}
+  - {name: is_proxy, type: BOOLEAN, nullable: false}
+  - {name: source, type: VARCHAR, nullable: false}
+  - {name: license, type: VARCHAR, nullable: false}
+null_report:
+  columns: [value]
+  by: prefecture_code

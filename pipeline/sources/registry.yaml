@@ -72,7 +72,7 @@ sources:
       name: Open Database License 1.0
       url: https://opendatacommons.org/licenses/odbl/1-0/
     attribution: "© OpenStreetMap contributors"
-    feeds: [poi, rail, station]
+    feeds: [poi, rail, station, h3_metric]
     days: [1, 2, 4, 11, 12, 13, 19, 20, 21, 23, 24]
     params:
       # Una consulta por categoría y por bbox. `bboxes: all` usa japan_bboxes completo.
@@ -82,6 +82,14 @@ sources:
           selectors:
             - 'nwr["brand"="ポケモンセンター"]'
             - 'nwr["brand:wikidata"="Q89673816"]'
+          out: center
+          bboxes: all
+        # Pokémon Store (día 4): 9 en OSM al 2026-10-07; una lleva por error el
+        # brand:wikidata de Pokémon Center, por eso va por brand y por nombre.
+        - id: pokemon_store
+          selectors:
+            - 'nwr["brand"="ポケモンストア"]'
+            - 'nwr["name"~"^ポケモンストア"]'
           out: center
           bboxes: all
         - id: pokemon_cafe
@@ -155,7 +163,7 @@ sources:
       name: Creative Commons CC0 1.0
       url: https://www.wikidata.org/wiki/Wikidata:Licensing
     attribution: "Wikidata (CC0)"
-    feeds: [prefecture, game_region]
+    feeds: [prefecture, game_region, outside_region]
     days: [3, 8, 28]
     params:
       queries:
@@ -163,6 +171,10 @@ sources:
           file: queries/wikidata_prefectures.rq
         - id: game_regions
           file: queries/wikidata_game_regions.rq
+        # En qué lugar real se basa cada región (P144) y sus coordenadas: alimenta la
+        # tarjeta "Fuera de Japón".
+        - id: game_regions_based_on
+          file: queries/wikidata_game_regions_based_on.rq
 
   - id: pokeapi
     kind: rest_json
@@ -257,7 +269,7 @@ sources:
       name: Propia; cada fila cita su fuente en source_url
       url: https://github.com/oechenique/pokemon-japan-atlas/blob/main/pipeline/sources/LICENSES.md
     attribution: "pokemon-japan-atlas (seeds curados; fuente por fila)"
-    feeds: [game_region]
+    feeds: [game_region, game_place, outside_region, poi]
     days: [3, 8, 16]
     params:
       dir: seeds
@@ -266,3 +278,21 @@ sources:
           file: game_regions.csv
           required_columns:
             [region_id, game_name, real_region, prefecture_code, generation, year, confidence, source_url]
+        # Lugares del juego ↔ lugares reales (día 8), con Wikidata P144 como fuente.
+        - name: game_places
+          file: game_places.csv
+          required_columns:
+            [place_id, game_name, region_id, real_place, real_place_wikidata, prefecture_code, lat, lon, confidence, source_url]
+        # Los dos Pokémon Café (día 23): dirección de la web oficial como hecho y
+        # coordenadas del nodo de OSM (coords_osm, ODbL). En OSM, al 2026-10-07, solo el
+        # de Tokio tiene brand; el de Osaka está solo por nombre.
+        - name: pokemon_cafes
+          file: pokemon_cafes.csv
+          required_columns:
+            [cafe_id, name_ja, name_en, address_ja, prefecture_code, lat, lon, coords_osm, confidence, source_url]
+        # Regiones fuera de Japón que Wikidata no cubre con P144 (Galar y Paldea, al
+        # 2026-10-07). Las demás salen de la consulta game_regions_based_on.
+        - name: regions_outside_japan
+          file: regions_outside_japan.csv
+          required_columns:
+            [region_id, game_name, generation, year, real_place, real_place_wikidata, lat, lon, confidence, source_url]

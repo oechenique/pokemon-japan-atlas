@@ -97,9 +97,54 @@ Pendiente para la Fase 3:
 
 - La publicación tiene que fallar si algún Bronze de la corrida tiene `extra.overpass_mode = reuse` (o, en general, archivos de Overpass con `reused_from`), para que nunca se publique por accidente un snapshot reusado.
 
-Propuesta, sin implementar: partir Overpass en una tarea por consulta. La segunda corrida tardó 49 min, a 11 del `execution_timeout` de 1 h.
+La partición de Overpass que se había propuesto acá se implementó en el paso 1 de la Fase 2.
 
-- `osm_overpass` deja de ser una sola tarea. Un `@task` arma la lista de consultas (categoría × bbox, hoy 50) desde el registro, y `fetch_query` se expande sobre esa lista con `map_index_template` = `<categoría>/<bbox>`. Cada consulta tiene su propio `execution_timeout` (unos 5 min) y sus reintentos con backoff.
-- Concurrencia 1 con un pool `overpass` de 1 slot, compartido con `osm_buildings`. Es mejor que `max_active_tis_per_dag`, que limita una sola tarea. El lock de archivo y `pause_s` quedan como respaldo.
-- Una tarea final `finish_overpass` junta los resultados y escribe el `metadata.json` de la fuente. Para eso, `BronzeRun.finish()` tiene que poder llamarse aparte de la ingesta. El `_progress.jsonl` ya sirve como punto de encuentro entre tareas.
-- El TaskGroup `bronze` queda con el mapeo por fuente para las otras 7 y un sub-grupo `overpass`.
+**Fase 2 · Silver/Gold: en curso. Pasos 1 y 2 cerrados (2026-10-07); próximo: paso 3 (Silver base), con `OVERPASS_MODE=reuse`.**
+
+Plan aprobado (2026-10-07):
+
+1. Partir Overpass.
+2. Contratos.
+3. Silver base (`prefecture`, `game_region`).
+4. Silver vectorial (`poi`, `rail`, `station`, `building`, con deduplicación por id de OSM).
+5. Rasters y H3.
+6. DQ gate y `quality_report.json`.
+7. Gold y `v_day_XX`.
+8. DAG, idempotencia y una sola corrida final con `query`.
+
+Paso 1 · Overpass partido (corrida `20261007T145530Z`, con `query`):
+
+- `overpass_queries` arma el plan de consultas (58: 57 de `osm_overpass` y 1 de `osm_buildings`).
+- `fetch_query` corre una tarea por consulta, en el pool `overpass` de 1 slot que crea `airflow-init`, con un timeout de 10 min y 3 reintentos.
+- `finish_overpass` cierra las dos fuentes y falla si falta un archivo del plan o sobra uno.
+- La corrida tardó 64 min en total, sin reintentos. Cada consulta tardó entre 32 s y 3 min 4 s, con mediana de 66 s, contra un timeout de 10 min.
+- Las 50 consultas que ya existían dieron el mismo checksum que en la corrida `20261007T133653Z`. El listado de VIIRS quedó estable también en una corrida real.
+
+Bronze nuevo:
+
+- Categoría `pokemon_store`: 9 tiendas en OSM.
+- Consulta de Wikidata `game_regions_based_on` (`P144` y coordenadas): da Unova, Kalos y Alola.
+- Seeds:
+  - `regions_outside_japan.csv`: Galar, `oficial` (entrevista de pokemon.com, 2019, archivada en la Wayback Machine porque el original da 404), y Paldea, `ampliamente aceptada` con Wikipedia (no se encontró una declaración oficial).
+  - `game_places.csv`: 40 lugares, 6 `ampliamente aceptada` y 34 `teoría de fans`. Las fuentes son Wikidata `P144`, un tuit de Masuda y prensa (TheGamer, GameRant y CBR). Nunca wikis de fans.
+    - `ampliamente aceptada` exige fuentes de **dos grupos editoriales distintos**. TheGamer, GameRant y CBR son de Valnet y cuentan como uno.
+    - La columna `source_groups` lleva los grupos de cada fila. El validador (`seeds.PUBLISHER_GROUPS`) la calcula a partir de los dominios citados y falla si un dominio no tiene grupo asignado.
+  - `pokemon_cafes.csv`: los dos Pokémon Café, con la dirección de la web oficial (`shop.pokemon.co.jp`) como hecho y las coordenadas del nodo de OSM. Entran a `poi` con `source = seed`, y el nodo de OSM citado no se duplica.
+- `game_regions.csv`: las filas de Kantō, Kansai, Kyūshū y Hokkaidō pasan a `oficial` con la entrevista "社長が訊く" de Nintendo (2010). Las de Tōkai siguen como `ampliamente aceptada`.
+- Regla 04: el día 23 queda con los dos Pokémon Café. Wikidata tiene 55 platos regionales con prefectura, en 34 de 47 prefecturas y ninguno en Hokkaidō (Sinnoh quedaría vacía), así que no alcanza.
+- El día 8 arranca a nivel región, con la fuente oficial, y suma las ciudades encima. La web muestra el `confidence` de cada una.
+
+Insumos para el día 18 (NULL):
+
+- Wikidata `P144`: solo 5 de los 158 lugares del juego de las cuatro regiones japonesas lo tienen, ninguno con referencia. Galar y Paldea tampoco lo tienen.
+- OSM: de los dos Pokémon Café, solo el de Tokio tiene `brand`. El de Osaka (nodo 7012998620) está solo por nombre.
+- Wikidata, platos regionales: no hay ninguno con prefectura en 13 prefecturas, entre ellas Hokkaidō.
+
+Paso 2 · Contratos:
+
+- 11 contratos en `pipeline/contracts/<entidad>.yaml`: las 7 de la regla 03 más `building`, `basemap`, `game_place` y `outside_region`.
+- Cada contrato fija columnas, tipos, nulabilidad, `pattern`, `allowed` y `range`; la clave primaria; el tipo de geometría y si va dentro de Japón; los conteos (`count`, `count_by`), y qué nulos se reportan (`null_report`).
+- El validador está en `pipeline/quality/contracts.py`. Exige `license` no nulable en todas las entidades y controla que contratos y `feeds` del registro coincidan en los dos sentidos.
+- Mínimos por categoría: alrededor del 80% de Bronze al 2026-10-07. En Bronze hay 22 Pokémon Center, 9 Pokémon Store, 257 Poké Lids, 1022 onsen y 19885 centrales.
+- Pokémon Café: en OSM, solo uno tiene `brand`, así que los dos entran por el seed (mínimo 2).
+

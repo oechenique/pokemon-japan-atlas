@@ -1,0 +1,37 @@
+entity: basemap
+description: >-
+  Mapa base global desde Natural Earth (tierra, agua, costas, países, áreas urbanas,
+  ciudades y batimetría). Es global porque lo usa el globo antes de llegar a Japón.
+sources: [natural_earth]
+primary_key: [layer, feature_id]
+geometry:
+  types: [POINT, LINESTRING, MULTILINESTRING, POLYGON, MULTIPOLYGON]
+  inside_japan: false
+count: {min: 10000}
+count_by:
+  column: layer
+  min:
+    land: 1
+    ocean: 1
+    coastline: 1000
+    country: 200
+    urban_area: 1000
+    populated_place: 5000
+    bathymetry: 10
+columns:
+  - name: layer
+    type: VARCHAR
+    nullable: false
+    allowed: [land, ocean, coastline, country, urban_area, populated_place, bathymetry]
+  - {name: feature_id, type: VARCHAR, nullable: false}
+  - {name: name_en, type: VARCHAR, nullable: true}
+  - {name: name_es, type: VARCHAR, nullable: true}
+  - {name: name_ja, type: VARCHAR, nullable: true}
+  # Profundidad en metros, solo en la batimetría.
+  - {name: depth_m, type: INTEGER, nullable: true, range: [0, 11000]}
+  # Rango de escala de Natural Earth (orden de aparición por zoom).
+  - {name: scalerank, type: INTEGER, nullable: true, range: [0, 20]}
+  - {name: license, type: VARCHAR, nullable: false}
+  - {name: geometry, type: GEOMETRY, nullable: false}
+null_report:
+  columns: [name_es, name_ja]

@@ -33,7 +33,7 @@ Las correspondencias juego ↔ realidad salen de `seeds` con su nivel de `confid
 | 20 | Hexagons | Densidad de puntos Pokémon en H3 | `h3_metric` poi_density | Web |
 | 21 | OpenStreetMap | Todo lo del atlas que viene de OSM, con conteos y atribución | Capas con `source = osm` | Web |
 | 22 | Projections | La transición globo → mercator en el front, más un render lateral de Japón en varias proyecciones | `prefecture` | Web + lateral |
-| 23 | Senses: Taste | Pokémon Cafés y comida típica por región | `poi` food (osm, seeds) | Web |
+| 23 | Senses: Taste | Los dos Pokémon Café (Nihonbashi y Shinsaibashi). La comida típica por región quedó afuera el 2026-10-07: Wikidata (CC0) tiene 55 platos con prefectura en 34 de 47 prefecturas y ninguno en Hokkaidō | `poi` pokemon_cafe (seeds, osm) | Web |
 | 24 | Network | Grafo del Shinkansen que conecta las ciudades con Pokémon Center | `rail`, `station`, `poi` | Web |
 | 25 | Is this a map? | El DAG de Airflow dibujado como un mapa de región: el linaje como territorio | `manifest.json` (linaje) | Web (panel) + lateral |
 | 26 | Water | Los mares de Hoenn: batimetría y costas de Kyūshū | natural_earth (batimetría) | Web |

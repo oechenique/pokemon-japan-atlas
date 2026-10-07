@@ -1,0 +1,21 @@
+# En qué lugar real se basa cada una de las 9 regiones principales (P144), con las
+# coordenadas de ese lugar (P625). Alimenta la tarjeta "Fuera de Japón".
+# Al 2026-10-07, Galar y Paldea no tienen P144 en Wikidata.
+SELECT ?region ?based_on ?based_on_en ?based_on_es ?coord WHERE {
+  VALUES ?region {
+    wd:Q1657833   # Kanto
+    wd:Q607459    # Johto
+    wd:Q872285    # Hoenn
+    wd:Q603624    # Sinnoh
+    wd:Q4843341   # Unova
+    wd:Q15132899  # Kalos
+    wd:Q25594375  # Alola
+    wd:Q61951161  # Galar
+    wd:Q113403829 # Paldea
+  }
+  ?region wdt:P144 ?based_on .
+  OPTIONAL { ?based_on wdt:P625 ?coord }
+  OPTIONAL { ?based_on rdfs:label ?based_on_en FILTER(LANG(?based_on_en) = "en") }
+  OPTIONAL { ?based_on rdfs:label ?based_on_es FILTER(LANG(?based_on_es) = "es") }
+}
+ORDER BY ?region ?based_on ?coord

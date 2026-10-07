@@ -35,9 +35,13 @@ REQUIRED_SOURCE_IDS = frozenset(
 # PokeAPI solo para datos factuales: nunca recursos con sprites o artwork (reglas/00).
 POKEAPI_ALLOWED_RESOURCES = frozenset({"generation", "region"})
 
-# Entidades Silver de reglas/03, más el mapa base y los edificios del día 14.
+# Entidades Silver de reglas/03, más el mapa base, los edificios del día 14, los lugares
+# del juego (día 8) y las regiones fuera de Japón. Cada una tiene su contrato en
+# pipeline/contracts/.
 ENTITIES = frozenset(
     {
+        "game_place",
+        "outside_region",
         "poi",
         "rail",
         "station",

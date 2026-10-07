@@ -1,0 +1,3 @@
+region_id,game_name,generation,year,real_place,real_place_wikidata,lat,lon,confidence,source_url
+galar,Galar,8,2019,Gran Bretaña,Q23666,53.833333333,-2.416666666,oficial,https://web.archive.org/web/20191120133644/https://www.pokemon.com/us/pokemon-news/we-interview-junichi-masuda-and-shigeru-ohmori-about-pokemon-sword-and-pokemon-shield/
+paldea,Paldea,9,2022,Península Ibérica,Q12837,40.24,-4.239166666,ampliamente aceptada,https://en.wikipedia.org/wiki/Pok%C3%A9mon_Scarlet_and_Violet

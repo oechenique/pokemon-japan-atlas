@@ -148,6 +148,10 @@ class BronzeRun:
             raise ValueError(f"ruta de Bronze inválida: {rel!r}")
         return self.dir.joinpath(*parts)
 
+    @property
+    def done_paths(self) -> set[str]:
+        return set(self._done)
+
     def done(self, rel: str) -> FileRecord | None:
         """El archivo ya se guardó en esta corrida (por ejemplo, antes de un reintento)."""
         return self._done.get(rel)
@@ -432,7 +436,39 @@ def ingest_source(
     run = BronzeRun(registry, registry.get(source_id), run_id, root)
     if run.complete:
         return summarize(run.metadata())
-    source_module(source_id).ingest(run)
+    module = source_module(source_id)
+    module.ingest(run)
+    if hasattr(module, "finalize"):
+        module.finalize(run)
+    return run.finish()
+
+
+def finish_source(
+    source_id: str,
+    run_id: str,
+    *,
+    registry: Registry | None = None,
+    root: Path | None = None,
+) -> dict[str, Any]:
+    """Cierra una fuente cuyos archivos se bajaron en varias tareas (Overpass partido).
+
+    Falla si falta algún archivo del plan de la fuente: nunca hay éxito parcial.
+    """
+    registry = registry or load_registry()
+    source = registry.get(source_id)
+    run = BronzeRun(registry, source, run_id, root)
+    if run.complete:
+        return summarize(run.metadata())
+    module = source_module(source_id)
+    expected = {rel for rel, _query in module.queries(registry, source)}
+    missing = sorted(rel for rel in expected if run.done(rel) is None)
+    if missing:
+        raise IngestError(f"{source_id}: faltan {len(missing)} archivos del plan: {missing[:5]}")
+    unexpected = sorted(run.done_paths - expected)
+    if unexpected:
+        raise IngestError(f"{source_id}: archivos fuera del plan: {unexpected[:5]}")
+    if hasattr(module, "finalize"):
+        module.finalize(run)
     return run.finish()
 
 

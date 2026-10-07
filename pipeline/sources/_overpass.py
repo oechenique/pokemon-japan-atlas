@@ -38,6 +38,8 @@ REMARK = re.compile(rb'"remark":\s*"((?:[^"\\]|\\.)*)"')
 TAIL_BYTES = 4096
 MODE_ENV = "OVERPASS_MODE"
 MODES = frozenset({"query", "reuse"})
+# Tipos de fuente del registro que consultan Overpass.
+KINDS = frozenset({"overpass", "overpass_around"})
 
 
 class OverpassError(IngestError):
@@ -78,9 +80,7 @@ def fetch(run: BronzeRun, rel: str, query: str) -> FileRecord:
     """Ejecuta una consulta y guarda la respuesta en Bronze (una sola vez por corrida)."""
     if (record := run.done(rel)) is not None:
         return record
-    current = mode()
-    run.extra["overpass_mode"] = current
-    if current == "reuse":
+    if mode() == "reuse":
         return _reuse(run, rel, query)
     config = run.registry.overpass
     with _exclusive(LOCK_PATH):
@@ -125,13 +125,51 @@ def _reuse(run: BronzeRun, rel: str, query: str) -> FileRecord:
             f"{MODE_ENV}=reuse: la consulta de {rel} cambió desde la corrida "
             f"{run.previous_run_id}; corré con {MODE_ENV}=query"
         )
-    notice = (
-        f"{MODE_ENV}=reuse: Overpass no se consultó; los archivos se copiaron del "
-        "Bronze anterior (ver reused_from). No sirve para la corrida de publicación."
-    )
-    if notice not in run.warnings:
-        run.warn(notice)
     return run.reuse(rel, extra=previous.extra)
+
+
+def finalize(run: BronzeRun, **extra: object) -> None:
+    """Datos de la fuente que van a metadata.json. Se calcula al cerrar la fuente, no
+    en cada consulta: en atlas_run cada consulta corre en su propia tarea."""
+    current = mode()
+    run.extra.update(
+        overpass_mode=current, snapshot_date=run.registry.overpass["snapshot_date"], **extra
+    )
+    if current == "reuse":
+        run.warn(
+            f"{MODE_ENV}=reuse: Overpass no se consultó; los archivos se copiaron del "
+            "Bronze anterior (ver reused_from). No sirve para la corrida de publicación."
+        )
+
+
+def fetch_planned(item: dict[str, str], run_id: str, *, registry=None, root=None) -> dict:
+    """Una consulta del plan de atlas_run (ver plan_queries), en su propia tarea."""
+    from pipeline.sources.registry import load_registry
+
+    registry = registry or load_registry()
+    run = BronzeRun(registry, registry.get(item["source"]), run_id, root)
+    if run.complete:
+        raise IngestError(f"{item['source']} ya está cerrada en la corrida {run_id}")
+    record = fetch(run, item["rel"], item["query"])
+    return {
+        "source": item["source"],
+        "path": record.path,
+        "bytes": record.bytes,
+        "sha256": record.sha256,
+        "reused_from": record.reused_from,
+    }
+
+
+def plan_queries(registry) -> list[dict[str, str]]:
+    """Todas las consultas a Overpass de la corrida, de todas las fuentes que lo usan."""
+    from pipeline.sources.base import source_module
+
+    plan = []
+    for source in registry.sources:
+        if source.kind in KINDS:
+            for rel, query in source_module(source.id).queries(registry, source):
+                plan.append({"source": source.id, "rel": rel, "query": query})
+    return plan
 
 
 def write_without_timestamps(part: Path, chunks: Iterator[bytes]) -> dict[str, str]:

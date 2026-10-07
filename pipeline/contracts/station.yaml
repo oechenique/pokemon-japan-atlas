@@ -1,0 +1,23 @@
+entity: station
+description: Estaciones de tren de OSM (railway=station), deduplicadas por id de OSM.
+sources: [osm_overpass]
+primary_key: [station_id]
+geometry:
+  types: [POINT]
+  inside_japan: true
+count: {min: 7000}
+columns:
+  - {name: station_id, type: VARCHAR, nullable: false, pattern: '^osm:node/\d+$'}
+  - {name: name_ja, type: VARCHAR, nullable: true}
+  - {name: name_en, type: VARCHAR, nullable: true}
+  - {name: name_es, type: VARCHAR, nullable: true}
+  - {name: operator, type: VARCHAR, nullable: true}
+  # En OSM casi nunca están en el nodo: se reportan como faltantes, no se inventan.
+  - {name: lines, type: 'VARCHAR[]', nullable: true}
+  - {name: prefecture_code, type: VARCHAR, nullable: true, pattern: '^JP-\d{2}$'}
+  - {name: h3_r9, type: VARCHAR, nullable: false, pattern: '^[0-9a-f]{15}$'}
+  - {name: license, type: VARCHAR, nullable: false}
+  - {name: geometry, type: GEOMETRY, nullable: false}
+null_report:
+  columns: [name_ja, name_en, operator, lines, prefecture_code]
+  by: prefecture_code

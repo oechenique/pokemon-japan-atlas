@@ -1,0 +1,52 @@
+entity: poi
+description: >-
+  Puntos de OSM por categoría, deduplicados por id de OSM (las bbox de Overpass se
+  solapan). Vías y relaciones van como su centro. Los Pokémon Café salen del seed
+  pokemon_cafes (dirección oficial); el nodo de OSM que el seed cita en coords_osm no
+  se duplica.
+sources: [osm_overpass, seeds]
+primary_key: [poi_id]
+geometry:
+  types: [POINT]
+  inside_japan: true
+count: {min: 15000}
+# Alrededor del 80% de lo que había en Bronze el 2026-10-07. La variación fina contra la
+# corrida anterior va como check informativo.
+count_by:
+  column: category
+  min:
+    pokemon_center: 18
+    pokemon_store: 7
+    pokemon_cafe: 2
+    poke_lids: 200
+    onsen: 800
+    power_plant: 15000
+columns:
+  - name: poi_id
+    type: VARCHAR
+    nullable: false
+    pattern: '^(osm:(node|way|relation)/\d+|seed:[a-z][a-z0-9_]*)$'
+  - {name: source, type: VARCHAR, nullable: false, allowed: [osm, seed]}
+  - {name: source_id, type: VARCHAR, nullable: false}
+  - name: category
+    type: VARCHAR
+    nullable: false
+    allowed: [pokemon_center, pokemon_store, pokemon_cafe, poke_lids, onsen, power_plant]
+  - {name: name_ja, type: VARCHAR, nullable: true}
+  - {name: name_en, type: VARCHAR, nullable: true}
+  - {name: name_es, type: VARCHAR, nullable: true}
+  # Solo en power_plant: plant:source de OSM (solar, hydro, nuclear...).
+  - {name: plant_source, type: VARCHAR, nullable: true}
+  # Solo en las filas del seed: la dirección de la web oficial.
+  - {name: address_ja, type: VARCHAR, nullable: true}
+  - {name: prefecture_code, type: VARCHAR, nullable: true, pattern: '^JP-\d{2}$'}
+  # within: dentro del polígono; nearest: la más cercana a menos de 5 km (costa).
+  - {name: prefecture_method, type: VARCHAR, nullable: true, allowed: [within, nearest]}
+  - {name: game_region, type: VARCHAR, nullable: true, allowed: [kanto, johto, hoenn, sinnoh]}
+  - {name: h3_r7, type: VARCHAR, nullable: false, pattern: '^[0-9a-f]{15}$'}
+  - {name: h3_r9, type: VARCHAR, nullable: false, pattern: '^[0-9a-f]{15}$'}
+  - {name: license, type: VARCHAR, nullable: false}
+  - {name: geometry, type: GEOMETRY, nullable: false}
+null_report:
+  columns: [name_ja, name_en, name_es, prefecture_code]
+  by: prefecture_code

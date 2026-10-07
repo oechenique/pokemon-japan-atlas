@@ -1,20 +1,22 @@
 """osm_overpass: una consulta por categoría y por bbox de Japón (reglas/03).
 
 Cada respuesta queda en <categoría>/<bbox>.json. Las bboxes se solapan: Silver
-deduplica por id de OSM.
+deduplica por id de OSM. En atlas_run cada consulta es su propia tarea (ver
+_overpass.plan_queries); ingest() las corre en serie, para usar fuera del DAG.
 """
 
 from __future__ import annotations
 
 from pipeline.sources import _overpass
 from pipeline.sources.base import BronzeRun
+from pipeline.sources.registry import Registry, Source
 
 
-def ingest(run: BronzeRun) -> None:
-    config = run.registry.overpass
-    bboxes = run.registry.japan_bboxes
-    run.extra["snapshot_date"] = config["snapshot_date"]
-    for category in run.source.params["categories"]:
+def queries(registry: Registry, source: Source) -> list[tuple[str, str]]:
+    config = registry.overpass
+    bboxes = registry.japan_bboxes
+    planned = []
+    for category in source.params["categories"]:
         names = list(bboxes) if category["bboxes"] == "all" else category["bboxes"]
         for name in names:
             query = _overpass.build_query(
@@ -24,4 +26,14 @@ def ingest(run: BronzeRun) -> None:
                 bbox=bboxes[name],
                 snapshot_date=config["snapshot_date"],
             )
-            _overpass.fetch(run, f"{category['id']}/{name}.json", query)
+            planned.append((f"{category['id']}/{name}.json", query))
+    return planned
+
+
+def ingest(run: BronzeRun) -> None:
+    for rel, query in queries(run.registry, run.source):
+        _overpass.fetch(run, rel, query)
+
+
+def finalize(run: BronzeRun) -> None:
+    _overpass.finalize(run)

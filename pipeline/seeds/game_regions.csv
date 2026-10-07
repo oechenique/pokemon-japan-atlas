@@ -1,26 +1,26 @@
 region_id,game_name,real_region,prefecture_code,generation,year,confidence,source_url
-kanto,Kanto,Kantō,JP-08,1,1996,ampliamente aceptada,https://www.wikidata.org/wiki/Q1657833#P144
-kanto,Kanto,Kantō,JP-09,1,1996,ampliamente aceptada,https://www.wikidata.org/wiki/Q1657833#P144
-kanto,Kanto,Kantō,JP-10,1,1996,ampliamente aceptada,https://www.wikidata.org/wiki/Q1657833#P144
-kanto,Kanto,Kantō,JP-11,1,1996,ampliamente aceptada,https://www.wikidata.org/wiki/Q1657833#P144
-kanto,Kanto,Kantō,JP-12,1,1996,ampliamente aceptada,https://www.wikidata.org/wiki/Q1657833#P144
-kanto,Kanto,Kantō,JP-13,1,1996,ampliamente aceptada,https://www.wikidata.org/wiki/Q1657833#P144
-kanto,Kanto,Kantō,JP-14,1,1996,ampliamente aceptada,https://www.wikidata.org/wiki/Q1657833#P144
-johto,Johto,Kansai,JP-24,2,1999,ampliamente aceptada,https://www.wikidata.org/wiki/Q607459#P144
-johto,Johto,Kansai,JP-25,2,1999,ampliamente aceptada,https://www.wikidata.org/wiki/Q607459#P144
-johto,Johto,Kansai,JP-26,2,1999,ampliamente aceptada,https://www.wikidata.org/wiki/Q607459#P144
-johto,Johto,Kansai,JP-27,2,1999,ampliamente aceptada,https://www.wikidata.org/wiki/Q607459#P144
-johto,Johto,Kansai,JP-28,2,1999,ampliamente aceptada,https://www.wikidata.org/wiki/Q607459#P144
-johto,Johto,Kansai,JP-29,2,1999,ampliamente aceptada,https://www.wikidata.org/wiki/Q607459#P144
-johto,Johto,Kansai,JP-30,2,1999,ampliamente aceptada,https://www.wikidata.org/wiki/Q607459#P144
+kanto,Kanto,Kantō,JP-08,1,1996,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
+kanto,Kanto,Kantō,JP-09,1,1996,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
+kanto,Kanto,Kantō,JP-10,1,1996,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
+kanto,Kanto,Kantō,JP-11,1,1996,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
+kanto,Kanto,Kantō,JP-12,1,1996,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
+kanto,Kanto,Kantō,JP-13,1,1996,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
+kanto,Kanto,Kantō,JP-14,1,1996,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
+johto,Johto,Kansai,JP-24,2,1999,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
+johto,Johto,Kansai,JP-25,2,1999,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
+johto,Johto,Kansai,JP-26,2,1999,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
+johto,Johto,Kansai,JP-27,2,1999,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
+johto,Johto,Kansai,JP-28,2,1999,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
+johto,Johto,Kansai,JP-29,2,1999,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
+johto,Johto,Kansai,JP-30,2,1999,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
 johto,Johto,Chūbu (Tōkai),JP-21,2,1999,ampliamente aceptada,https://www.wikidata.org/wiki/Q607459#P144
 johto,Johto,Chūbu (Tōkai),JP-22,2,1999,ampliamente aceptada,https://www.wikidata.org/wiki/Q607459#P144
 johto,Johto,Chūbu (Tōkai),JP-23,2,1999,ampliamente aceptada,https://www.wikidata.org/wiki/Q607459#P144
-hoenn,Hoenn,Kyūshū,JP-40,3,2002,ampliamente aceptada,https://www.wikidata.org/wiki/Q872285#P144
-hoenn,Hoenn,Kyūshū,JP-41,3,2002,ampliamente aceptada,https://www.wikidata.org/wiki/Q872285#P144
-hoenn,Hoenn,Kyūshū,JP-42,3,2002,ampliamente aceptada,https://www.wikidata.org/wiki/Q872285#P144
-hoenn,Hoenn,Kyūshū,JP-43,3,2002,ampliamente aceptada,https://www.wikidata.org/wiki/Q872285#P144
-hoenn,Hoenn,Kyūshū,JP-44,3,2002,ampliamente aceptada,https://www.wikidata.org/wiki/Q872285#P144
-hoenn,Hoenn,Kyūshū,JP-45,3,2002,ampliamente aceptada,https://www.wikidata.org/wiki/Q872285#P144
-hoenn,Hoenn,Kyūshū,JP-46,3,2002,ampliamente aceptada,https://www.wikidata.org/wiki/Q872285#P144
-sinnoh,Sinnoh,Hokkaidō,JP-01,4,2006,ampliamente aceptada,https://www.wikidata.org/wiki/Q603624#P144
+hoenn,Hoenn,Kyūshū,JP-40,3,2002,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
+hoenn,Hoenn,Kyūshū,JP-41,3,2002,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
+hoenn,Hoenn,Kyūshū,JP-42,3,2002,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
+hoenn,Hoenn,Kyūshū,JP-43,3,2002,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
+hoenn,Hoenn,Kyūshū,JP-44,3,2002,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
+hoenn,Hoenn,Kyūshū,JP-45,3,2002,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
+hoenn,Hoenn,Kyūshū,JP-46,3,2002,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html
+sinnoh,Sinnoh,Hokkaidō,JP-01,4,2006,oficial,https://www.nintendo.co.jp/ds/interview/irbj/vol1/index2.html

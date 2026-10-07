@@ -50,7 +50,11 @@ services:
 
   airflow-init:
     <<: *airflow
-    command: ["airflow", "db", "migrate"]
+    # El pool overpass (1 slot) serializa las consultas a Overpass de atlas_run.
+    command:
+      - bash
+      - -c
+      - 'airflow db migrate && airflow pools set overpass 1 "Overpass, una consulta por vez"'
     depends_on:
       postgres:
         condition: service_healthy

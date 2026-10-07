@@ -1,0 +1,25 @@
+entity: rail
+description: >-
+  Vías de OSM: el Shinkansen de todo Japón y la red completa de Kanto, deduplicadas por
+  id de OSM.
+sources: [osm_overpass]
+primary_key: [rail_id]
+geometry:
+  types: [LINESTRING]
+  inside_japan: true
+count: {min: 40000}
+count_by:
+  column: kind
+  min: {shinkansen: 10000, line: 30000}
+columns:
+  - {name: rail_id, type: VARCHAR, nullable: false, pattern: '^osm:way/\d+$'}
+  - {name: kind, type: VARCHAR, nullable: false, allowed: [shinkansen, line]}
+  - {name: name_ja, type: VARCHAR, nullable: true}
+  - {name: name_en, type: VARCHAR, nullable: true}
+  - {name: name_es, type: VARCHAR, nullable: true}
+  - {name: operator, type: VARCHAR, nullable: true}
+  - {name: length_m, type: DOUBLE, nullable: false, range: [0, 1000000]}
+  - {name: license, type: VARCHAR, nullable: false}
+  - {name: geometry, type: GEOMETRY, nullable: false}
+null_report:
+  columns: [name_ja, name_en, operator]

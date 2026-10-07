@@ -1,0 +1,18 @@
+entity: building
+description: Edificios de OSM a 500 m del Pokémon Center Mega Tokyo (día 14).
+sources: [osm_buildings]
+primary_key: [building_id]
+geometry:
+  types: [POLYGON, MULTIPOLYGON]
+  inside_japan: true
+count: {min: 1400}
+columns:
+  - {name: building_id, type: VARCHAR, nullable: false, pattern: '^osm:(way|relation)/\d+$'}
+  - {name: building, type: VARCHAR, nullable: false}
+  - {name: name, type: VARCHAR, nullable: true}
+  - {name: height_m, type: DOUBLE, nullable: true, range: [0, 700]}
+  - {name: levels, type: INTEGER, nullable: true, range: [0, 120]}
+  - {name: license, type: VARCHAR, nullable: false}
+  - {name: geometry, type: GEOMETRY, nullable: false}
+null_report:
+  columns: [name, height_m, levels]

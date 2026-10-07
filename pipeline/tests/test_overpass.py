@@ -178,6 +178,7 @@ def _first_run(registry, make_source, root):
     body = HEADER.replace("{ts}", "t") + BODY
     run = _run(registry, make_source, RUN_1, root, [FakeResponse(body)])
     _overpass.fetch(run, "x.json", "q")
+    _overpass.finalize(run)
     run.finish()
 
 
@@ -188,6 +189,7 @@ def test_reuse_mode_copies_previous_bronze_without_querying(
     monkeypatch.setenv("OVERPASS_MODE", "reuse")
     second = _run(registry, make_source, RUN_2, tmp_path, [])
     record = _overpass.fetch(second, "x.json", "q")
+    _overpass.finalize(second)
     metadata_summary = second.finish()
 
     assert second.session.queries == []
@@ -227,3 +229,68 @@ def test_unknown_mode_is_an_error(monkeypatch):
     monkeypatch.setenv("OVERPASS_MODE", "cache")
     with pytest.raises(IngestError):
         _overpass.mode()
+
+
+# Overpass partido (atlas_run) ------------------------------------------------
+
+
+def test_plan_covers_both_overpass_sources(registry):
+    plan = _overpass.plan_queries(registry)
+    by_source = {}
+    for item in plan:
+        by_source.setdefault(item["source"], []).append(item["rel"])
+    categories = registry.get("osm_overpass").params["categories"]
+    expected = sum(
+        len(registry.japan_bboxes) if c["bboxes"] == "all" else len(c["bboxes"]) for c in categories
+    )
+    assert len(by_source["osm_overpass"]) == expected
+    assert by_source["osm_buildings"] == ["buildings.json"]
+    assert "pokemon_store/kanto_chubu.json" in by_source["osm_overpass"]
+    rels = [(i["source"], i["rel"]) for i in plan]
+    assert len(rels) == len(set(rels))
+
+
+def _patch_session(monkeypatch, responses):
+    session = FakeSession(responses)
+    monkeypatch.setattr(_overpass.BronzeRun, "__init__", _wrap_init(session), raising=True)
+    return session
+
+
+def _wrap_init(session, original=BronzeRun.__init__):
+    def init(self, *args, **kwargs):
+        original(self, *args, **kwargs)
+        self.session = session
+
+    return init
+
+
+def test_split_fetch_then_finish_writes_one_metadata(registry, tmp_path, monkeypatch):
+    from pipeline.sources.base import finish_source
+
+    plan = [i for i in _overpass.plan_queries(registry) if i["source"] == "osm_buildings"]
+    body = HEADER.replace("{ts}", "t") + BODY
+    session = _patch_session(monkeypatch, [FakeResponse(body)])
+    result = _overpass.fetch_planned(plan[0], RUN_1, registry=registry, root=tmp_path)
+    assert result["path"] == "buildings.json" and result["reused_from"] is None
+    # Un reintento de la misma tarea no vuelve a consultar.
+    _overpass.fetch_planned(plan[0], RUN_1, registry=registry, root=tmp_path)
+    assert len(session.queries) == 1
+
+    summary = finish_source("osm_buildings", RUN_1, registry=registry, root=tmp_path)
+    assert summary["files"] == 1
+    metadata = BronzeRun(registry, registry.get("osm_buildings"), RUN_1, tmp_path).metadata()
+    assert metadata["extra"]["overpass_mode"] == "query"
+    assert metadata["extra"]["center"]["osm"] == "node/3350332481"
+    with pytest.raises(IngestError, match="cerrada"):
+        _overpass.fetch_planned(plan[0], RUN_1, registry=registry, root=tmp_path)
+
+
+def test_finish_fails_when_a_planned_query_is_missing(registry, tmp_path, monkeypatch):
+    from pipeline.sources.base import finish_source
+
+    plan = [i for i in _overpass.plan_queries(registry) if i["source"] == "osm_overpass"]
+    body = HEADER.replace("{ts}", "t") + BODY
+    _patch_session(monkeypatch, [FakeResponse(body)])
+    _overpass.fetch_planned(plan[0], RUN_1, registry=registry, root=tmp_path)
+    with pytest.raises(IngestError, match="faltan"):
+        finish_source("osm_overpass", RUN_1, registry=registry, root=tmp_path)

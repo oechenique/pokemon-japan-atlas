@@ -1,0 +1,28 @@
+entity: game_region
+description: >-
+  Las 4 regiones del juego que están en Japón, como unión de los polígonos de sus
+  prefecturas según el seed game_regions.
+sources: [seeds, natural_earth, wikidata, pokeapi]
+primary_key: [region_id]
+geometry:
+  types: [POLYGON, MULTIPOLYGON]
+  inside_japan: true
+count: {min: 4, max: 4}
+columns:
+  - {name: region_id, type: VARCHAR, nullable: false, allowed: [kanto, johto, hoenn, sinnoh]}
+  - {name: game_name, type: VARCHAR, nullable: false}
+  - {name: name_ja, type: VARCHAR, nullable: false}
+  - {name: name_en, type: VARCHAR, nullable: false}
+  - {name: name_es, type: VARCHAR, nullable: true}
+  - {name: real_region, type: VARCHAR, nullable: false}
+  - {name: generation, type: INTEGER, nullable: false, range: [1, 4]}
+  - {name: year, type: INTEGER, nullable: false, range: [1996, 2006]}
+  # La más baja entre las filas del seed: si una prefectura es teoría, la región lo dice.
+  - name: confidence
+    type: VARCHAR
+    nullable: false
+    allowed: [oficial, ampliamente aceptada, teoría de fans]
+  - {name: prefecture_codes, type: 'VARCHAR[]', nullable: false}
+  - {name: source_urls, type: 'VARCHAR[]', nullable: false}
+  - {name: license, type: VARCHAR, nullable: false}
+  - {name: geometry, type: GEOMETRY, nullable: false}
