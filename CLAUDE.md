@@ -50,13 +50,29 @@ Decisiones de esta sesión:
 
 **Reglas nuevas recibidas (2026-10-06):** `reglas/03-fuentes-y-pipeline.md` (fuentes, Medallion, contratos, DQ gate, DAG `atlas_run`) y `reglas/04-catalogo-30-dias.md` (catálogo de los 30 días: web o render lateral). Ajustes en la 00 (todos los días salen del pipeline; fases 1 a 3 redefinidas) y en la 01 (token `--dur-fade`, pendiente de llevar a `web/tokens/tokens.ts`).
 
-**Fase 1 · Bronze: en curso.** Plan aprobado (2026-10-06): Overpass y Wikidata se consultan en cada corrida; en Fase 1 solo se crea el seed regiones del juego ↔ prefecturas, sin Bulbapedia como `source_url`; `fetched_at` y `checksum` van al `metadata.json` de cada corrida; `osm_buildings` alrededor del Pokémon Center Mega Tokyo.
+**Fase 1 · Bronze: en curso. Pasos 1 a 3 cerrados (2026-10-06); próximo paso: el 4 (dependencias e imagen).**
 
-- Pasos 1 y 2 hechos (verificación de licencias y de las Poké Lids), registrados en `pipeline/sources/LICENSES.md`.
-- Decisiones aprobadas sobre el informe:
-  - `viirs_night` pasa a NASA Black Marble VNP46A4 (CC0, 7 teselas de Japón) en lugar de EOG. Se publica solo la agregación H3. El token va en `.env` como `EARTHDATA_TOKEN`, lo crea el usuario y vence a los 60 días.
-  - Copernicus GLO-90: los avisos y la exención de responsabilidad van en el footer, el manifest, los renders laterales y un `NOTICE` en la raíz.
-  - Poké Lids: desde OSM, con cobertura declarada y sin fechas. Los aportes del día 16 tienen que venir de relevamiento propio, nunca del sitio oficial.
-  - Overpass: consultas por bbox (no `area`), una sola instancia (`overpass-api.de`) y `osm_snapshot_date` fijado para la corrida final de publicación. Un `remark` de error cuenta como falla.
+Plan aprobado (2026-10-06):
+
+- Overpass y Wikidata se consultan en cada corrida.
+- En la Fase 1 solo se crea el seed regiones del juego ↔ prefecturas, sin Bulbapedia como `source_url`.
+- `fetched_at` y `checksum` van al `metadata.json` de cada corrida.
+- `osm_buildings` se toma alrededor del Pokémon Center Mega Tokyo.
+
+Pasos cerrados:
+
+- **1 y 2 · Verificación de licencias y de las Poké Lids**: registrada en `pipeline/sources/LICENSES.md`.
+- **3 · Registro de fuentes**:
+  - `pipeline/sources/registry.yaml` con las 9 fuentes, consultas SPARQL en `pipeline/sources/queries/` y validador en `pipeline/sources/registry.py`, con tests.
+  - `NOTICE` en la raíz y `.env.example` con `EARTHDATA_TOKEN`, que compose pasa a Airflow.
+
+Decisiones aprobadas (también reflejadas en las reglas 03 y 04):
+
+- `viirs_night` pasa a NASA Black Marble VNP46A4 (CC0, 7 teselas de Japón) en lugar de EOG. Se publica solo la agregación H3. El token va en `.env`, lo crea el usuario y vence a los 60 días.
+- Copernicus GLO-90: los avisos y la exención de responsabilidad van en el footer, el manifest, los renders laterales y el `NOTICE`.
+- Poké Lids: desde OSM, con cobertura declarada y sin fechas. Los aportes del día 16 tienen que venir de relevamiento propio, nunca del sitio oficial.
+- Overpass: consultas por bbox (no `area`) a una sola instancia (`overpass-api.de`), con `overpass.snapshot_date` fijado para la corrida final de publicación. Un `remark` de error cuenta como falla, aunque venga con HTTP 200.
+
+Pendiente del paso 6: un test que verifique que cada fuente del registro tenga su módulo y que no haya módulos sin registrar.
 
 Pendiente para la Fase 2: deduplicar por id de OSM en Silver, porque las bbox de Overpass se solapan.

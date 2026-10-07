@@ -1,0 +1,51 @@
+pokemon-japan-atlas
+Proyecto de fans, sin fines comerciales. No está afiliado a Nintendo, Creatures,
+GAME FREAK ni The Pokémon Company, ni cuenta con su respaldo. Pokémon y los
+nombres asociados son marcas de sus respectivos dueños.
+
+Este repositorio y sus artefactos publicados (publish/) contienen datos derivados
+de fuentes de terceros. Estos son los avisos que exigen sus licencias. El detalle
+de cada fuente está en pipeline/sources/registry.yaml y la verificación, en
+pipeline/sources/LICENSES.md.
+
+-------------------------------------------------------------------------------
+Copernicus DEM GLO-90 (Copernicus WorldDEM™-90)
+-------------------------------------------------------------------------------
+Licencia: Licence for COP-DEM-GLO-90-F Global 90m Full, Free & Open.
+https://dataspace.copernicus.eu/sites/default/files/media/files/2025-06/copernicus_contributing_mission_data_access_v2_cop_dem_licenses.pdf
+
+Los productos derivados del DEM (cuenca visual del Fuji, relieve sombreado y
+sus agregaciones) llevan este aviso, exigido por el art. 6(b):
+
+  produced using Copernicus WorldDEM™-90 © DLR e.V. 2010-2014 and © Airbus
+  Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European
+  Union and ESA; all rights reserved
+
+Aviso exigido por el art. 6(c), en su texto original:
+
+  The organisations in charge of the Copernicus programme by law or by
+  delegation do not incur any liability for any use of the Copernicus
+  WorldDEM™-90.
+
+Art. 6(d): este proyecto no está respaldado oficialmente por el proveedor,
+el licenciante ni ninguna entidad a cargo del programa Copernicus.
+
+Art. 6(e): quien redistribuya estos productos derivados queda obligado por
+las mismas condiciones, incluidos los dos avisos anteriores.
+
+-------------------------------------------------------------------------------
+Otras fuentes que exigen atribución
+-------------------------------------------------------------------------------
+OpenStreetMap: © OpenStreetMap contributors. Datos bajo ODbL 1.0
+  (https://opendatacommons.org/licenses/odbl/1-0/). La base derivada se
+  comparte bajo la misma licencia.
+Kontur Population: Kontur Population: Global Population Density for 400m H3
+  Hexagons (recorte de Japón, 2023-11-01), CC BY 4.0
+  (https://creativecommons.org/licenses/by/4.0/). Agregado a H3 por este proyecto.
+NASA Black Marble: NASA VIIRS Land Science Investigator-led Processing System.
+  VIIRS/NPP Lunar BRDF-Adjusted Nighttime Lights Yearly L3 Global 15 arc second
+  Linear Lat Lon Grid (VNP46A4), https://doi.org/10.5067/VIIRS/VNP46A4.002.
+  NASA no respalda este proyecto.
+
+Fuentes de dominio público o CC0 (se citan por cortesía): Natural Earth,
+Wikidata. PokeAPI se usa solo para datos factuales, nunca para imágenes.

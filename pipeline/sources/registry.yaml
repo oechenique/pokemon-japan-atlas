@@ -1,0 +1,264 @@
+# Registro de fuentes del pipeline (reglas/03). Nada se descarga si no está acá:
+# agregar una fuente es agregar una entrada más su módulo en pipeline/sources/.
+#
+# Lo que es de cada corrida (fetched_at, checksum, ETag, timestamp de OSM) no vive
+# en este archivo: cada ingesta lo escribe en
+# data/bronze/<source>/run_id=<id>/metadata.json.
+#
+# La verificación de licencias está en pipeline/sources/LICENSES.md.
+
+version: 1
+
+user_agent: "pokemon-japan-atlas/0.1 (+https://github.com/oechenique/pokemon-japan-atlas)"
+
+# Configuración común de Overpass (osm_overpass y osm_buildings).
+overpass:
+  # Una sola instancia: otras van atrasadas y romperían la reproducibilidad.
+  endpoint: https://overpass-api.de/api/interpreter
+  timeout_s: 180
+  pause_s: 10
+  # null en desarrollo. Para la corrida final de publicación se fija una fecha
+  # ISO 8601 en UTC (ej. "2026-10-31T00:00:00Z"), que se agrega como [date:"..."].
+  snapshot_date: null
+
+# Rectángulos que cubren Japón para Overpass, en el orden de Overpass:
+# [sur, oeste, norte, este]. Se solapan a propósito (Silver deduplica por id de OSM)
+# y reemplazan a `area`, que con [date:] se queda sin memoria. Quedan afuera
+# Okinotorishima y Minamitorishima: no tienen ninguna capa del atlas.
+japan_bboxes:
+  hokkaido: [41.3, 139.3, 45.6, 145.9]
+  tohoku: [37.7, 138.0, 41.6, 142.1]
+  kanto_chubu: [34.2, 136.4, 37.9, 141.1]
+  kansai_chugoku_shikoku: [32.7, 130.8, 36.4, 137.0]
+  kyushu: [29.5, 128.5, 34.8, 132.1]
+  okinawa_amami: [24.0, 122.9, 29.6, 131.4]
+  izu_ogasawara: [24.0, 139.0, 34.3, 142.4]
+
+sources:
+  - id: natural_earth
+    kind: http_files
+    url: https://www.naturalearthdata.com/
+    license:
+      id: public-domain
+      name: Dominio público
+      url: https://www.naturalearthdata.com/about/terms-of-use/
+    attribution: "Made with Natural Earth. Free vector and raster map data @ naturalearthdata.com."
+    feeds: [basemap, prefecture, game_region]
+    days: [3, 22, 26]
+    params:
+      files:
+        - name: admin_0_countries
+          url: https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip
+        - name: admin_1_states_provinces
+          url: https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_1_states_provinces.zip
+        - name: populated_places
+          url: https://naciscdn.org/naturalearth/10m/cultural/ne_10m_populated_places.zip
+        - name: urban_areas
+          url: https://naciscdn.org/naturalearth/10m/cultural/ne_10m_urban_areas.zip
+        - name: coastline
+          url: https://naciscdn.org/naturalearth/10m/physical/ne_10m_coastline.zip
+        - name: land
+          url: https://naciscdn.org/naturalearth/10m/physical/ne_10m_land.zip
+        - name: ocean
+          url: https://naciscdn.org/naturalearth/10m/physical/ne_10m_ocean.zip
+        - name: bathymetry_all
+          url: https://naciscdn.org/naturalearth/10m/physical/ne_10m_bathymetry_all.zip
+
+  - id: osm_overpass
+    kind: overpass
+    url: https://www.openstreetmap.org/
+    license:
+      id: ODbL-1.0
+      name: Open Database License 1.0
+      url: https://opendatacommons.org/licenses/odbl/1-0/
+    attribution: "© OpenStreetMap contributors"
+    feeds: [poi, rail, station]
+    days: [1, 2, 4, 11, 12, 13, 19, 20, 21, 23, 24]
+    params:
+      # Una consulta por categoría y por bbox. `bboxes: all` usa japan_bboxes completo.
+      categories:
+        - id: pokemon_center
+          # Mega Tokyo tiene brand pero no brand:wikidata: van las dos condiciones.
+          selectors:
+            - 'nwr["brand"="ポケモンセンター"]'
+            - 'nwr["brand:wikidata"="Q89673816"]'
+          out: center
+          bboxes: all
+        - id: pokemon_cafe
+          selectors:
+            - 'nwr["brand"="ポケモンカフェ"]'
+            - 'nwr["brand:wikidata"="Q130138182"]'
+          out: center
+          bboxes: all
+        - id: poke_lids
+          selectors:
+            - 'node["manhole"]["name"~"^ポケふた"]'
+            - 'nwr["tourism"="artwork"]["name"~"^ポケふた"]'
+          out: center
+          bboxes: all
+        - id: onsen
+          selectors:
+            - 'nwr["amenity"="public_bath"]["bath:type"="onsen"]'
+            - 'nwr["natural"="hot_spring"]'
+          out: center
+          bboxes: all
+        - id: power_plant
+          selectors:
+            - 'nwr["power"="plant"]'
+          out: center
+          bboxes: all
+        - id: station
+          selectors:
+            - 'node["railway"="station"]'
+          out: center
+          bboxes: all
+        - id: shinkansen
+          selectors:
+            - 'way["railway"="rail"]["highspeed"="yes"]'
+          out: geom
+          bboxes: all
+        # La red completa solo hace falta en Kanto (día 2).
+        - id: rail_kanto
+          selectors:
+            - 'way["railway"="rail"][!"service"]'
+          out: geom
+          bboxes: [kanto_chubu]
+
+  - id: osm_buildings
+    kind: overpass_around
+    url: https://www.openstreetmap.org/
+    license:
+      id: ODbL-1.0
+      name: Open Database License 1.0
+      url: https://opendatacommons.org/licenses/odbl/1-0/
+    attribution: "© OpenStreetMap contributors"
+    feeds: [building]
+    days: [14]
+    params:
+      # Pokémon Center Mega Tokyo (Sunshine City, Ikebukuro), nodo OSM 3350332481.
+      center:
+        label: Pokémon Center Mega Tokyo
+        osm: node/3350332481
+        lat: 35.7289
+        lon: 139.7192
+      radius_m: 500
+      selectors:
+        - 'way["building"]'
+        - 'relation["building"]'
+      out: geom
+
+  - id: wikidata
+    kind: sparql
+    url: https://query.wikidata.org/sparql
+    license:
+      id: CC0-1.0
+      name: Creative Commons CC0 1.0
+      url: https://www.wikidata.org/wiki/Wikidata:Licensing
+    attribution: "Wikidata (CC0)"
+    feeds: [prefecture, game_region]
+    days: [3, 8, 28]
+    params:
+      queries:
+        - id: prefectures
+          file: queries/wikidata_prefectures.rq
+        - id: game_regions
+          file: queries/wikidata_game_regions.rq
+
+  - id: pokeapi
+    kind: rest_json
+    url: https://pokeapi.co/api/v2/
+    license:
+      id: LicenseRef-factual-data
+      name: Datos factuales, sin imágenes (reglas/00)
+      url: https://pokeapi.co/docs/v2#fairuse
+    attribution: "PokeAPI (pokeapi.co), solo datos factuales"
+    feeds: [game_region]
+    days: [3, 28]
+    params:
+      # Solo estos recursos: nunca pokemon, pokemon-form ni nada con sprites.
+      resources: [generation, region]
+
+  - id: kontur_population
+    kind: http_files
+    url: https://data.humdata.org/dataset/kontur-population-japan
+    license:
+      id: CC-BY-4.0
+      name: Creative Commons Attribution 4.0
+      url: https://creativecommons.org/licenses/by/4.0/
+    attribution: "Kontur Population: Global Population Density for 400m H3 Hexagons (Japón, 2023-11-01), CC BY 4.0"
+    feeds: [h3_metric]
+    days: [9]
+    params:
+      files:
+        - name: population_jp_20231101
+          url: https://geodata-eu-central-1-kontur-public.s3.amazonaws.com/kontur_datasets/kontur_population_JP_20231101.gpkg.gz
+
+  - id: copernicus_dem
+    kind: cog_tiles
+    url: https://registry.opendata.aws/copernicus-dem/
+    license:
+      id: LicenseRef-Copernicus-WorldDEM-90
+      name: Licence for COP-DEM-GLO-90-F Global 90m Full, Free & Open
+      url: https://dataspace.copernicus.eu/sites/default/files/media/files/2025-06/copernicus_contributing_mission_data_access_v2_cop_dem_licenses.pdf
+    attribution: >-
+      produced using Copernicus WorldDEM™-90 © DLR e.V. 2010-2014 and © Airbus Defence
+      and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA;
+      all rights reserved. The organisations in charge of the Copernicus programme by law
+      or by delegation do not incur any liability for any use of the Copernicus WorldDEM™-90.
+    feeds: [raster_product]
+    days: [5, 29]
+    params:
+      # Lectura sin credenciales vía /vsis3/ (AWS_NO_SIGN_REQUEST=YES).
+      bucket: copernicus-dem-90m
+      region: eu-central-1
+      tile_name: "Copernicus_DSM_COG_30_{lat}_00_{lon}_00_DEM"
+      # Recortes que se guardan en Bronze, como [sur, oeste, norte, este].
+      aois:
+        # 200 km alrededor del Fuji (35.3606 N, 138.7274 E), para la cuenca visual.
+        fuji_viewshed: [33.56, 136.52, 37.16, 140.93]
+        # Las 4 regiones del juego, para el relieve sombreado.
+        kanto: [34.8, 138.3, 37.2, 141.0]
+        kansai: [33.4, 134.2, 35.8, 136.5]
+        kyushu: [30.9, 129.3, 34.0, 132.1]
+        hokkaido: [41.3, 139.3, 45.6, 145.9]
+
+  - id: viirs_night
+    kind: earthdata_tiles
+    url: https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/products/VNP46A4/
+    license:
+      id: CC0-1.0
+      name: NASA Earth Science data (CC0)
+      url: https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance
+    attribution: >-
+      NASA VIIRS Land Science Investigator-led Processing System. VIIRS/NPP Lunar
+      BRDF-Adjusted Nighttime Lights Yearly L3 Global 15 arc second Linear Lat Lon Grid
+      (VNP46A4), https://doi.org/10.5067/VIIRS/VNP46A4.002
+    feeds: [h3_metric]
+    days: [17]
+    params:
+      product: VNP46A4
+      collection: 5200
+      year: 2025
+      archive_url: "https://ladsweb.modaps.eosdis.nasa.gov/archive/allData/5200/VNP46A4/{year}/001/"
+      token_env: EARTHDATA_TOKEN
+      # Teselas de 10° que cubren Japón: se bajan, se recortan a crop_bbox y se descartan.
+      tiles: [h30v05, h30v06, h31v04, h31v05, h31v06, h32v04, h32v05]
+      crop_bbox: [24.0, 122.9, 45.6, 145.9]
+
+  - id: seeds
+    kind: local_csv
+    url: https://github.com/oechenique/pokemon-japan-atlas/tree/main/pipeline/seeds
+    license:
+      id: LicenseRef-seeds
+      name: Propia; cada fila cita su fuente en source_url
+      url: https://github.com/oechenique/pokemon-japan-atlas/blob/main/pipeline/sources/LICENSES.md
+    attribution: "pokemon-japan-atlas (seeds curados; fuente por fila)"
+    feeds: [game_region]
+    days: [3, 8, 16]
+    params:
+      dir: seeds
+      files:
+        - name: game_regions
+          file: game_regions.csv
+          required_columns:
+            [region_id, game_name, real_region, prefecture_code, generation, year, confidence, source_url]

@@ -19,6 +19,8 @@ x-airflow: &airflow
     PYTHONPATH: /opt/airflow
     ATLAS_DATA_DIR: /opt/airflow/data
     ATLAS_PUBLISH_DIR: /opt/airflow/publish
+    # Secretos de fuentes, desde .env (ver .env.example).
+    EARTHDATA_TOKEN: ${EARTHDATA_TOKEN:-}
   volumes:
     - ./pipeline:/opt/airflow/pipeline
     - ./data:/opt/airflow/data

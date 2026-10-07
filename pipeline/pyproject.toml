@@ -10,6 +10,10 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "AIR"]
 
+[tool.ruff.lint.isort]
+# El código se importa como `pipeline.*` (PYTHONPATH=/opt/airflow en la imagen).
+known-first-party = ["pipeline"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"

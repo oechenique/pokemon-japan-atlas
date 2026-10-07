@@ -1,0 +1,20 @@
+# Las 9 regiones principales del juego (instancias de Q15830, "Pokémon region"),
+# con nombres en ja/en/es. Las de Japón alimentan game_region; el resto, la
+# tarjeta "Fuera de Japón".
+SELECT ?region ?name_ja ?name_en ?name_es WHERE {
+  VALUES ?region {
+    wd:Q1657833   # Kanto
+    wd:Q607459    # Johto
+    wd:Q872285    # Hoenn
+    wd:Q603624    # Sinnoh
+    wd:Q4843341   # Unova
+    wd:Q15132899  # Kalos
+    wd:Q25594375  # Alola
+    wd:Q61951161  # Galar
+    wd:Q113403829 # Paldea
+  }
+  ?region wdt:P31 wd:Q15830 .
+  OPTIONAL { ?region rdfs:label ?name_ja FILTER(LANG(?name_ja) = "ja") }
+  OPTIONAL { ?region rdfs:label ?name_en FILTER(LANG(?name_en) = "en") }
+  OPTIONAL { ?region rdfs:label ?name_es FILTER(LANG(?name_es) = "es") }
+}

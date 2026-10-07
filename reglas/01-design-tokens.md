@@ -74,6 +74,7 @@ Se activa con el código Konami (↑ ↑ ↓ ↓ ← → ← → B A). Reemplaza
 | `--ease-standard` | `cubic-bezier(.4, 0, .2, 1)` | Hover y cambios de estado |
 | `--dur-fast` | `150ms` | Hover |
 | `--dur-base` | `400ms` | Cambios de panel y fades de capas |
+| `--dur-fade` | `400ms` (150ms con reduced-motion) | Fades de opacidad |
 | `--dur-reveal` | `700ms` | Entrada escalonada |
 | `--stagger` | `120ms` | Retraso entre ítems de una lista |
 | `--dur-fly` | `1600ms` | `flyTo` de MapLibre |

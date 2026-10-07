@@ -71,16 +71,16 @@ pokemon-japan-atlas/
 
 - Estados direccionables por URL: `?region=kanto`, `?day=4`.
 - El mapeo día → estado del mapa vive en `web/content/days.json` (se define en una fase posterior).
-- Algunos días se resuelven fuera del DAG y se documentan así: 7 (*10 minute map*), 10 (*Prompting only*), 16 (*Collaborative map*) y 30 (*Pen & paper*).
+- **Todos los días salen del pipeline.** Algunos no van en el mapa sino como renders laterales en `publish/<run_id>/side/`. El catálogo completo está en `04-catalogo-30-dias.md`, y las fuentes y el flujo en `03-fuentes-y-pipeline.md`.
 
 ## Fases
 
 | Fase | Entregable |
 |---|---|
 | 0 · Esqueleto | Repo con git, Docker Compose con Airflow, Next.js + Tailwind v4 con los tokens (fuentes solo en latín), Terraform base (providers fijados, sin recursos ni credenciales) y CI |
-| 1 · Bronze | Ingesta de todas las fuentes, idempotente, con `run_id` |
-| 2 · Silver/Gold | Limpieza, geometrías válidas, H3, DQ gate |
-| 3 · Publicación | Export a PMTiles/GeoJSON y `manifest.json` |
+| 1 · Bronze | Registro de fuentes, verificación de licencias e ingesta de todas las fuentes, idempotente, con `run_id` (regla 03) |
+| 2 · Silver/Gold | Contratos, geometrías válidas, H3, agregación de rasters, DQ gate y vistas por día (reglas 03 y 04) |
+| 3 · Publicación | PMTiles (incluido el mapa base), GeoJSON, renders laterales y `manifest.json` |
 | 4 · Front base | Shell, wordmark, tarjetas de regiones, mapa globo → Japón y subset japonés de las fuentes |
 | 5 · Estados | Capas por día, panel de detalle, i18n y temas completos |
 | 6 · Deploy | Terraform (Vercel; R2 solo si se activó), README, capturas y video |
