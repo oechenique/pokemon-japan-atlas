@@ -78,14 +78,17 @@ VIEWS: dict[int, str] = {
             FROM {p("prefecture")}""",
     23: f"""SELECT poi_id, name_ja, name_en, address_ja, prefecture_code, game_region, geometry
             FROM {p("poi")} WHERE category = 'pokemon_cafe'""",
-    24: f"""SELECT 'station' AS layer, station_key AS id, name_ja AS name, method,
-                   array_to_string(lines, ' / ') AS detail, NULL AS distance_km, geometry
+    24: f"""SELECT 'station' AS layer, station_key AS id, name_ja AS name, kind,
+                   array_to_string(lines, ' / ') AS detail, false AS schematic,
+                   NULL::DOUBLE AS distance_km, geometry
             FROM {p("shinkansen_stations")}
             UNION ALL
-            SELECT 'edge', edge_id, line, method, from_key || ' - ' || to_key, distance_km, geometry
+            SELECT 'edge', edge_id, from_key || ' - ' || to_key, kind,
+                   array_to_string(lines, ' / '), schematic, distance_km, geometry
             FROM {p("shinkansen_edges")}
             UNION ALL
-            SELECT 'center_link', poi_id, center_name, NULL, station_name, distance_km, geometry
+            SELECT 'center_link', poi_id, center_name, NULL, station_name, false, distance_km,
+                   geometry
             FROM {p("center_to_shinkansen")}""",
     26: f"""SELECT layer, feature_id, depth_m, geometry FROM {p("basemap")}
             WHERE layer IN ('bathymetry', 'coastline')

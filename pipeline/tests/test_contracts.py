@@ -26,6 +26,7 @@ EXPECTED = {
     "game_place",
     "outside_region",
     "shinkansen_route_stop",
+    "shinkansen_line_station",
 }
 
 

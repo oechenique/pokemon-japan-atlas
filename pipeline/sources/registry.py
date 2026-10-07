@@ -42,6 +42,7 @@ ENTITIES = frozenset(
     {
         "game_place",
         "outside_region",
+        "shinkansen_line_station",
         "shinkansen_route_stop",
         "poi",
         "rail",

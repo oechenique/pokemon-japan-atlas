@@ -34,6 +34,11 @@ PUBLISHER_GROUPS = {
     "x.com": "oficial",
     "nintendo.co.jp": "oficial",
     "pokemon.co.jp": "oficial",
+    "jr-central.co.jp": "oficial",
+    "jr-odekake.net": "oficial",
+    "jrkyushu.co.jp": "oficial",
+    "jrhokkaido.co.jp": "oficial",
+    "jreast.co.jp": "oficial",
     "web.archive.org": "oficial",
 }
 

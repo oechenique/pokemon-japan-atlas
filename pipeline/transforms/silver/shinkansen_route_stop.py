@@ -18,6 +18,8 @@ from pipeline.transforms.base import Bronze, silver_path, write_entity
 LICENSE = "ODbL-1.0"
 STOP_ROLES = ("stop", "stop_entry_only", "stop_exit_only")
 STATION_RADIUS_DEG = 0.003  # ~300 m
+# "東北新幹線（上り）" -> "東北新幹線"
+DIRECTION = r"[（(].*[）)]\s*$"
 
 
 def build(con: duckdb.DuckDBPyConnection, bronze: Bronze, *, root: Path | None = None) -> dict:

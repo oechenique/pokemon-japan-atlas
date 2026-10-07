@@ -26,6 +26,7 @@ DEPENDENCIES: dict[str, tuple[str, ...]] = {
     "raster_product": (),
     "basemap": (),
     "shinkansen_route_stop": ("station",),
+    "shinkansen_line_station": ("station", "rail"),
     "h3_metric": ("prefecture", "poi", "rail"),
 }
 

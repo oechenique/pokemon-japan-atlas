@@ -9,7 +9,8 @@ Bloqueantes (si alguno falla, la tarea falla y no se construye Gold):
 - todo dentro del bbox de Japón, salvo las entidades globales;
 - conteos mínimos y máximos, también por categoría;
 - cruces: generación de cada región del juego contra PokeAPI y año contra la fecha de
-  los primeros juegos (Wikidata).
+  los primeros juegos (Wikidata), y toda estación del seed oficial del Shinkansen con
+  su nodo en OSM.
 
 Informativos (no bloquean): tasas de nulos por columna y por prefectura, variación de
 conteos contra la corrida anterior, estadísticas de Silver (deduplicación, prefecturas)
@@ -40,8 +41,8 @@ from pipeline.transforms.base import (
     silver_path,
     sparql_rows,
 )
-from pipeline.transforms.gold.shinkansen_stations import DIRECTION
 from pipeline.transforms.silver.outside_region import ROMAN
+from pipeline.transforms.silver.shinkansen_route_stop import DIRECTION
 
 REPORT_NAME = "quality_report.json"
 REPORT_VERSION = 1
@@ -237,7 +238,8 @@ def _schema_check(con: duckdb.DuckDBPyConnection, contract: Contract, table: str
 
 
 def cross_checks(con: duckdb.DuckDBPyConnection, bronze: Bronze, root: Path | None) -> list[dict]:
-    """Generación (PokeAPI) y año (Wikidata) de cada región, contra Silver."""
+    """Generación (PokeAPI) y año (Wikidata) de cada región, y estaciones del seed del
+    Shinkansen con su nodo en OSM."""
     games = sparql_rows(
         bronze.json("wikidata", "generation_games.json"), ("generation", "first_release")
     )
@@ -271,6 +273,19 @@ def cross_checks(con: duckdb.DuckDBPyConnection, bronze: Bronze, root: Path | No
                     f"Silver {year}, Wikidata {expected}",
                 )
             )
+    stations = silver_path("shinkansen_line_station", root)
+    if stations.is_file():
+        missing = [
+            name
+            for (name,) in con.execute(
+                f"SELECT DISTINCT name_ja FROM '{stations.as_posix()}' "
+                "WHERE station_id IS NULL ORDER BY 1"
+            ).fetchall()
+        ]
+        detail = f"Sin nodo en OSM: {', '.join(missing)}" if missing else ""
+        checks.append(
+            _check("shinkansen_line_station", "seed_station_in_osm", len(missing), detail)
+        )
     return checks
 
 
@@ -479,8 +494,8 @@ def coverage_findings(
             len(routes),
             lines,
             "osm_overpass",
-            f"Con ruta: {', '.join(sorted(r for (r,) in routes))}. Las demás estaciones del día 24 "
-            "salen por distancia a la vía (10 m).",
+            f"Con ruta: {', '.join(sorted(r for (r,) in routes))}. Las estaciones del día 24 "
+            "salen del listado oficial de JR (seed shinkansen_stations).",
         )
     )
 

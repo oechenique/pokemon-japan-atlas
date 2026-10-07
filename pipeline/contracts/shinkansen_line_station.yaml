@@ -1,0 +1,29 @@
+entity: shinkansen_line_station
+description: >-
+  Estaciones del Shinkansen por línea, del seed shinkansen_stations (listados oficiales
+  de JR, usados como hecho), cruzadas con su nodo de estación en OSM por nombre en
+  japonés. Si hay varios nodos con ese nombre, desempata la cercanía a la vía del
+  Shinkansen (líneas full) o a la estación anterior de la línea (mini). Toda estación
+  del seed tiene que tener su nodo: si falta, el DQ gate bloquea.
+sources: [seeds, osm_overpass]
+primary_key: [line_id, seq]
+geometry:
+  types: [POINT]
+  inside_japan: true
+count: {min: 120}
+columns:
+  - {name: line_id, type: VARCHAR, nullable: false, pattern: '^[a-z][a-z_]*$'}
+  - {name: line_name_ja, type: VARCHAR, nullable: false}
+  # mini: Akita y Yamagata, que corren por vías convencionales.
+  - {name: kind, type: VARCHAR, nullable: false, allowed: [full, mini]}
+  - {name: operator, type: VARCHAR, nullable: false}
+  - {name: seq, type: INTEGER, nullable: false, range: [1, 100]}
+  - {name: name_ja, type: VARCHAR, nullable: false}
+  - {name: station_id, type: VARCHAR, nullable: false, pattern: '^osm:node/\d+$'}
+  # Cuántos nodos de OSM tenían ese nombre, y cómo se eligió.
+  - {name: candidates, type: INTEGER, nullable: false, range: [0, 100]}
+  - {name: match_method, type: VARCHAR, nullable: false, allowed: [unique, track, sequence]}
+  - {name: prefecture_code, type: VARCHAR, nullable: true, pattern: '^JP-\d{2}$'}
+  - {name: source_url, type: VARCHAR, nullable: false, pattern: '^https://'}
+  - {name: license, type: VARCHAR, nullable: false}
+  - {name: geometry, type: GEOMETRY, nullable: false}

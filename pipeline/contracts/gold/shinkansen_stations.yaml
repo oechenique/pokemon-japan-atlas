@@ -1,21 +1,20 @@
 entity: shinkansen_stations
 description: >-
-  Estaciones del Shinkansen (día 24). Donde OSM tiene la relación de ruta con paradas,
-  salen de ahí (method = route, topología exacta); en las demás líneas, de las
-  estaciones a 10 m o menos de una vía del Shinkansen, sin operadores ajenos a JR
-  (method = distance). Una por nombre.
-sources: [shinkansen_route_stop, station, rail]
+  Estaciones del Shinkansen (día 24), una por nombre, del listado oficial de JR por
+  línea (seed) cruzado con OSM. kind es mini solo si todas sus líneas son mini.
+sources: [shinkansen_line_station]
 primary_key: [station_key]
 geometry:
   types: [POINT]
   inside_japan: true
-count: {min: 90, max: 160}
+# 119 estaciones al 2026-10 (incluida Gala-Yuzawa).
+count: {min: 110, max: 140}
 columns:
   - {name: station_key, type: VARCHAR, nullable: false}
-  - {name: station_id, type: VARCHAR, nullable: true}
+  - {name: station_id, type: VARCHAR, nullable: false}
   - {name: name_ja, type: VARCHAR, nullable: false}
-  - {name: method, type: VARCHAR, nullable: false, allowed: [route, distance]}
   - {name: lines, type: 'VARCHAR[]', nullable: false}
+  - {name: kind, type: VARCHAR, nullable: false, allowed: [full, mini]}
   - {name: prefecture_code, type: VARCHAR, nullable: true}
   - {name: license, type: VARCHAR, nullable: false}
   - {name: geometry, type: GEOMETRY, nullable: false}

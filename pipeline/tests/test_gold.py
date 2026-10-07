@@ -118,59 +118,108 @@ def test_power_plants_keep_big_or_non_solar_sources(con, tmp_path, monkeypatch):
 # Día 24 ---------------------------------------------------------------------------
 
 
-def test_minimum_spanning_tree_chains_stations_along_a_line():
-    positions = {"a": (35.0, 139.0), "b": (35.0, 139.5), "c": (35.0, 140.0), "d": (35.0, 140.4)}
-    tree = shinkansen_edges.minimum_spanning_tree(sorted(positions), positions.get)
-    assert sorted(tuple(sorted(e)) for e in tree) == [("a", "b"), ("b", "c"), ("c", "d")]
+def test_seed_station_match_tiebreaks():
+    from pipeline.transforms.silver.shinkansen_line_station import choose
+
+    fukushima_city = ("osm:node/1", 140.459, 37.755, "JP-07", 3.0)
+    fukushima_osaka = ("osm:node/2", 135.486, 34.697, "JP-27", None)
+    assert choose([], "full", None) == (None, None)
+    assert choose([fukushima_city], "full", None) == (fukushima_city, "unique")
+    # Full: la cercanía a la vía del Shinkansen desempata.
+    assert choose([fukushima_osaka, fukushima_city], "full", None) == (fukushima_city, "track")
+    # Primera estación de una mini (sin anterior): también por la vía.
+    assert choose([fukushima_osaka, fukushima_city], "mini", None) == (fukushima_city, "track")
+    # Resto de una mini: la más cercana a la estación anterior de la línea.
+    near_yamagata = ("osm:node/3", 140.33, 38.25, "JP-06", None)
+    far = ("osm:node/4", 130.0, 33.0, "JP-40", None)
+    assert choose([far, near_yamagata], "mini", (140.3, 38.2)) == (near_yamagata, "sequence")
 
 
-def test_shinkansen_stations_use_routes_then_a_tight_distance(con, tmp_path, monkeypatch):
-    gold = tmp_path / "gold"
-    gold.mkdir()
-    write_entity(
-        con,
-        "station",
-        """
-        SELECT * FROM (VALUES
-          ('osm:node/1', '上野', NULL, NULL, 'JR東日本', NULL, 'JP-13', h3_latlng_to_cell_string(35.713, 139.777, 9), 'ODbL-1.0', ST_Point(139.777, 35.713)),
-          ('osm:node/2', '新横浜', NULL, NULL, '東海旅客鉄道', NULL, 'JP-14', h3_latlng_to_cell_string(35.5075, 139.617, 9), 'ODbL-1.0', ST_Point(139.617, 35.5075)),
-          ('osm:node/3', '有楽町', NULL, NULL, 'JR東日本', NULL, 'JP-13', h3_latlng_to_cell_string(35.675, 139.7633, 9), 'ODbL-1.0', ST_Point(139.7633, 35.675)),
-          ('osm:node/4', '鉄道博物館', NULL, NULL, '埼玉新都市交通', NULL, 'JP-11', h3_latlng_to_cell_string(35.92, 139.62, 9), 'ODbL-1.0', ST_Point(139.62, 35.92))
-        ) AS t(station_id, name_ja, name_en, name_es, operator, lines, prefecture_code, h3_r9, license, geometry)
-    """,
-        root=tmp_path,
+def _line_stations(con, root, rows):
+    values = ", ".join(
+        f"('{line}', '{line}', '{kind}', 'JR', {seq}, '{name}', 'osm:node/{seq}{line[:1]}', 1, 'unique', "
+        f"NULL, 'https://x', 'x', ST_Point({lon}, {lat}))"
+        for line, kind, seq, name, lon, lat in rows
     )
     write_entity(
         con,
-        "rail",
-        """
-        SELECT * FROM (VALUES
-          ('osm:way/10', 'shinkansen', '東海道新幹線', NULL, NULL, NULL, 1.0, 'ODbL-1.0',
-           ST_GeomFromText('LINESTRING(139.617 35.50, 139.617 35.52, 139.7630 35.66, 139.7630 35.69)')),
-          ('osm:way/11', 'shinkansen', '東北新幹線', NULL, NULL, NULL, 1.0, 'ODbL-1.0',
-           ST_GeomFromText('LINESTRING(139.62 35.90, 139.62 35.95)'))
-        ) AS t(rail_id, kind, name_ja, name_en, name_es, operator, length_m, license, geometry)
+        "shinkansen_line_station",
+        f"""
+        SELECT * FROM (VALUES {values}) AS t(line_id, line_name_ja, kind, operator, seq, name_ja,
+            station_id, candidates, match_method, prefecture_code, source_url, license, geometry)
     """,
-        root=tmp_path,
+        root=root,
     )
-    write_entity(
+    gold = root / "gold"
+    gold.mkdir(exist_ok=True)
+    (root / "silver" / "shinkansen_line_station.parquet").replace(
+        gold / "shinkansen_line_station.parquet"
+    )
+
+
+def test_stations_and_edges_from_the_official_list(con, tmp_path, monkeypatch):
+    _line_stations(
         con,
-        "shinkansen_route_stop",
-        """
-        SELECT * FROM (VALUES
-          ('osm:relation/1', '東北新幹線（下り）', 1, 'osm:node/100', 'osm:node/1', '上野', 'ODbL-1.0', ST_Point(139.777, 35.713))
-        ) AS t(route_id, route_name, stop_order, stop_node, station_id, name_ja, license, geometry)
-    """,
-        root=tmp_path,
+        tmp_path,
+        [
+            ("tohoku", "full", 1, "東京", 139.767, 35.681),
+            ("tohoku", "full", 2, "上野", 139.777, 35.713),
+            ("tohoku", "full", 3, "福島", 140.459, 37.755),
+            ("joetsu", "full", 1, "東京", 139.767, 35.681),
+            ("joetsu", "full", 2, "上野", 139.777, 35.713),
+            ("yamagata", "mini", 1, "福島", 140.459, 37.755),
+            ("yamagata", "mini", 2, "米沢", 140.11, 37.91),
+        ],
     )
-    for entity in ("station", "rail", "shinkansen_route_stop"):
-        (tmp_path / "silver" / f"{entity}.parquet").replace(gold / f"{entity}.parquet")
-    _relax_minimum(monkeypatch, shinkansen_stations, "shinkansen_stations")
-    shinkansen_stations.build(con, RUN, root=tmp_path)
-    path = gold_path("shinkansen_stations", tmp_path).as_posix()
-    rows = dict(con.execute(f"SELECT name_ja, method FROM '{path}'").fetchall())
-    # Ueno por la ruta; Shin-Yokohama sobre la vía; Yūrakuchō a ~30 m y el New Shuttle, fuera.
-    assert rows == {"上野": "route", "新横浜": "distance"}
+    for module, table in (
+        (shinkansen_stations, "shinkansen_stations"),
+        (shinkansen_edges, "shinkansen_edges"),
+    ):
+        _relax_minimum(monkeypatch, module, table)
+        module.build(con, RUN, root=tmp_path)
+    stations = {
+        r[0]: r[1:]
+        for r in con.execute(
+            f"SELECT name_ja, kind, lines FROM '{gold_path('shinkansen_stations', tmp_path).as_posix()}'"
+        ).fetchall()
+    }
+    assert stations["福島"] == ("full", ["tohoku", "yamagata"])
+    assert stations["米沢"] == ("mini", ["yamagata"])
+    edges = {
+        r[0]: r[1:]
+        for r in con.execute(
+            f"SELECT edge_id, lines, kind, schematic FROM '{gold_path('shinkansen_edges', tmp_path).as_posix()}'"
+        ).fetchall()
+    }
+    # Tokio-Ueno lo comparten dos líneas: un solo tramo con las dos.
+    assert edges["shinkansen:上野|shinkansen:東京"] == (["joetsu", "tohoku"], "full", False)
+    assert edges["shinkansen:福島|shinkansen:米沢"] == (["yamagata"], "mini", True)
+    assert len(edges) == 3
+
+
+def test_repo_seed_has_every_line_and_the_control_list():
+    import csv
+
+    from pipeline.sources import seeds
+
+    path = seeds.PIPELINE_DIR / "seeds" / "shinkansen_stations.csv"
+    rows = list(csv.DictReader(path.open(encoding="utf-8")))
+    lines = {r["line_id"]: r["kind"] for r in rows}
+    assert lines["akita"] == lines["yamagata"] == "mini"
+    assert {
+        "tokaido",
+        "sanyo",
+        "kyushu",
+        "nishikyushu",
+        "tohoku",
+        "hokkaido",
+        "joetsu",
+        "hokuriku",
+    } <= set(lines)
+    names = {r["station_name_ja"] for r in rows}
+    assert {"新潟", "秋田", "山形"} <= names
+    assert not {"野々市", "新白島", "上牧"} & names
+    assert all(r["source_url"].startswith("https://") for r in rows)
 
 
 # Día 18 ---------------------------------------------------------------------------

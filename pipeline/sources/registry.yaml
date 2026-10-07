@@ -72,7 +72,7 @@ sources:
       name: Open Database License 1.0
       url: https://opendatacommons.org/licenses/odbl/1-0/
     attribution: "© OpenStreetMap contributors"
-    feeds: [poi, rail, station, h3_metric, shinkansen_route_stop]
+    feeds: [poi, rail, station, h3_metric, shinkansen_route_stop, shinkansen_line_station]
     days: [1, 2, 4, 11, 12, 13, 19, 20, 21, 23, 24]
     params:
       # Una consulta por categoría y por bbox. `bboxes: all` usa japan_bboxes completo.
@@ -287,7 +287,7 @@ sources:
       name: Propia; cada fila cita su fuente en source_url
       url: https://github.com/oechenique/pokemon-japan-atlas/blob/main/pipeline/sources/LICENSES.md
     attribution: "pokemon-japan-atlas (seeds curados; fuente por fila)"
-    feeds: [prefecture, game_region, game_place, outside_region, poi]
+    feeds: [prefecture, game_region, game_place, outside_region, poi, shinkansen_line_station]
     days: [3, 8, 16]
     params:
       dir: seeds
@@ -313,6 +313,11 @@ sources:
         - name: prefecture_regions
           file: prefecture_regions.csv
           required_columns: [prefecture_code, real_region, source_url]
+        # Estaciones del Shinkansen por línea, de los listados oficiales de JR (hecho,
+        # fuente por línea). Día 24. Akita y Yamagata van como kind = mini.
+        - name: shinkansen_stations
+          file: shinkansen_stations.csv
+          required_columns: [line_id, line_name_ja, kind, operator, seq, station_name_ja, source_url, as_of]
         # Totales de referencia para medir cobertura en el quality_report (día 18).
         - name: coverage_references
           file: coverage_references.csv
