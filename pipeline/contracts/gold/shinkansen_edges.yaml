@@ -1,0 +1,20 @@
+entity: shinkansen_edges
+description: >-
+  Tramos del grafo del Shinkansen (día 24) entre estaciones consecutivas: en el orden
+  de la relación de ruta (method = route) o a lo largo de la línea con ese nombre
+  (method = distance). Un tramo por par de estaciones; geometría esquemática (recta).
+sources: [shinkansen_stations, shinkansen_route_stop, rail]
+primary_key: [edge_id]
+geometry:
+  types: [LINESTRING]
+  inside_japan: true
+count: {min: 80}
+columns:
+  - {name: edge_id, type: VARCHAR, nullable: false}
+  - {name: from_key, type: VARCHAR, nullable: false}
+  - {name: to_key, type: VARCHAR, nullable: false}
+  - {name: line, type: VARCHAR, nullable: true}
+  - {name: method, type: VARCHAR, nullable: false, allowed: [route, distance]}
+  - {name: distance_km, type: DOUBLE, nullable: false, range: [0, 500]}
+  - {name: license, type: VARCHAR, nullable: false}
+  - {name: geometry, type: GEOMETRY, nullable: false}

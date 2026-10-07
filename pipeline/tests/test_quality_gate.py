@@ -10,13 +10,13 @@ from pipeline.transforms.base import connect, write_entity
 
 GOOD_POI = """
     SELECT * FROM (VALUES
-      ('osm:node/1', 'osm', 'node/1', 'pokemon_center', 'ポケモンセンター', 'Pokémon Center', NULL, NULL, NULL,
+      ('osm:node/1', 'osm', 'node/1', 'pokemon_center', 'ポケモンセンター', 'Pokémon Center', NULL, NULL, NULL, NULL,
        'JP-13', 'within', 'kanto', h3_latlng_to_cell_string(35.68, 139.77, 7), h3_latlng_to_cell_string(35.68, 139.77, 9),
        'ODbL-1.0', ST_Point(139.77, 35.68)),
-      ('osm:node/2', 'osm', 'node/2', 'onsen', '湯', NULL, NULL, NULL, NULL,
+      ('osm:node/2', 'osm', 'node/2', 'onsen', '湯', NULL, NULL, NULL, NULL, NULL,
        NULL, NULL, NULL, h3_latlng_to_cell_string(35.0, 139.0, 7), h3_latlng_to_cell_string(35.0, 139.0, 9),
        'ODbL-1.0', ST_Point(139.0, 35.0))
-    ) AS t(poi_id, source, source_id, category, name_ja, name_en, name_es, plant_source, address_ja,
+    ) AS t(poi_id, source, source_id, category, name_ja, name_en, name_es, plant_source, plant_output_mw, address_ja,
            prefecture_code, prefecture_method, game_region, h3_r7, h3_r9, license, geometry)
 """
 

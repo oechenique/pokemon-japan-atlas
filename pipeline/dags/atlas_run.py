@@ -23,7 +23,11 @@ más los informativos y la cobertura de las fuentes, en
 publish/<run_id>/quality_report.json. Si falla un bloqueante, la tarea falla y no hay
 Gold. Sin reintentos.
 
-Gold y publicación se suman en los pasos siguientes.
+TaskGroup gold (después del gate): copy_silver pasa a Gold el Silver aprobado, una
+tarea por tabla derivada (pipeline/transforms/gold_entities.py), views recrea
+data/gold/atlas.duckdb con las vistas gold.v_day_XX y lineage cierra. Sin reintentos.
+
+La publicación se suma en la Fase 3.
 """
 
 from __future__ import annotations
@@ -35,6 +39,7 @@ from airflow.sdk import Asset, dag, get_current_context, task, task_group
 
 from pipeline.quality.contracts import load_contracts
 from pipeline.sources.registry import REGISTRY_PATH, load_registry
+from pipeline.transforms.gold_entities import DERIVED
 from pipeline.transforms.silver_entities import DEPENDENCIES
 
 DATA_URI = "file:///opt/airflow/data"
@@ -51,6 +56,11 @@ SILVER_ASSETS = {
 }
 CONTRACTS = load_contracts()
 QUALITY_ASSET = Asset(name="quality_report", uri="file:///opt/airflow/publish/quality_report")
+GOLD_ASSETS = {
+    table: Asset(name=f"gold.{table}", uri=f"{DATA_URI}/gold/{table}.parquet")
+    for table in (*DEPENDENCIES, *DERIVED)
+}
+ATLAS_ASSET = Asset(name="gold.atlas", uri=f"{DATA_URI}/gold/atlas.duckdb")
 
 
 @dag(
@@ -59,7 +69,7 @@ QUALITY_ASSET = Asset(name="quality_report", uri="file:///opt/airflow/publish/qu
     start_date=pendulum.datetime(2026, 1, 1, tz="UTC"),
     catchup=False,
     max_active_runs=1,
-    tags=["bronze", "silver", "dq"],
+    tags=["bronze", "silver", "dq", "gold"],
 )
 def atlas_run():
     @task(inlets=[REGISTRY_ASSET])
@@ -174,8 +184,54 @@ def atlas_run():
 
         return run_gate(atlas_run_id)
 
+    @task_group(group_id="gold")
+    def gold(atlas_run_id: str):
+        @task(
+            retries=0,
+            inlets=[QUALITY_ASSET, *SILVER_ASSETS.values()],
+            outlets=[GOLD_ASSETS[e] for e in DEPENDENCIES],
+        )
+        def copy_silver(atlas_run_id: str) -> list[dict]:
+            from pipeline.transforms.gold_entities import copy_silver as copy
+
+            return copy(atlas_run_id)
+
+        def derived_task(table: str):
+            @task(task_id=table, retries=0, pool=DUCKDB_POOL, outlets=[GOLD_ASSETS[table]])
+            def build(atlas_run_id: str) -> dict:
+                from pipeline.transforms.gold_entities import build_derived
+
+                return build_derived(table, atlas_run_id)
+
+            return build
+
+        copied = copy_silver(atlas_run_id)
+        built = {table: derived_task(table)(atlas_run_id) for table in DERIVED}
+        for table, upstream in DERIVED.items():
+            copied >> built[table]
+            for dependency in upstream:
+                built[dependency] >> built[table]
+
+        @task(retries=0, outlets=[ATLAS_ASSET])
+        def views(atlas_run_id: str) -> dict:
+            from pipeline.transforms.gold.views import write_views
+
+            return write_views(atlas_run_id)
+
+        @task(retries=0)
+        def lineage(atlas_run_id: str, copies: list[dict], tables: list[dict], atlas: dict) -> dict:
+            from pipeline.transforms.base import write_run_lineage
+
+            report = write_run_lineage(atlas_run_id, [*copies, *tables], layer="gold")
+            return {**report, "views": atlas["views"]}
+
+        atlas = views(atlas_run_id)
+        for task_ in built.values():
+            task_ >> atlas
+        lineage(atlas_run_id, copied, list(built.values()), atlas)
+
     run_id = start_run()
-    bronze(run_id) >> silver(run_id) >> dq_gate(run_id)
+    bronze(run_id) >> silver(run_id) >> dq_gate(run_id) >> gold(run_id)
 
 
 atlas_run()

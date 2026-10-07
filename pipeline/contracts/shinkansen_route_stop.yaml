@@ -1,0 +1,22 @@
+entity: shinkansen_route_stop
+description: >-
+  Paradas (rol stop) de las relaciones de ruta del Shinkansen en OSM, en el orden de la
+  relación. Dan la topología exacta del día 24 donde existen (al 2026-10-07, el Tōhoku).
+  Cada parada toma la estación de Silver más cercana a menos de 300 m.
+sources: [osm_overpass]
+primary_key: [route_id, stop_order]
+geometry:
+  types: [POINT]
+  inside_japan: true
+count: {min: 1}
+columns:
+  - {name: route_id, type: VARCHAR, nullable: false, pattern: '^osm:relation/\d+$'}
+  - {name: route_name, type: VARCHAR, nullable: true}
+  - {name: stop_order, type: INTEGER, nullable: false, range: [1, 1000]}
+  - {name: stop_node, type: VARCHAR, nullable: false, pattern: '^osm:node/\d+$'}
+  - {name: station_id, type: VARCHAR, nullable: true, pattern: '^osm:node/\d+$'}
+  - {name: name_ja, type: VARCHAR, nullable: true}
+  - {name: license, type: VARCHAR, nullable: false}
+  - {name: geometry, type: GEOMETRY, nullable: false}
+null_report:
+  columns: [route_name, station_id, name_ja]

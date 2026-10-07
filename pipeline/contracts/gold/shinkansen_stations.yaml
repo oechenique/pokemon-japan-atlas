@@ -1,0 +1,21 @@
+entity: shinkansen_stations
+description: >-
+  Estaciones del Shinkansen (día 24). Donde OSM tiene la relación de ruta con paradas,
+  salen de ahí (method = route, topología exacta); en las demás líneas, de las
+  estaciones a 10 m o menos de una vía del Shinkansen, sin operadores ajenos a JR
+  (method = distance). Una por nombre.
+sources: [shinkansen_route_stop, station, rail]
+primary_key: [station_key]
+geometry:
+  types: [POINT]
+  inside_japan: true
+count: {min: 90, max: 160}
+columns:
+  - {name: station_key, type: VARCHAR, nullable: false}
+  - {name: station_id, type: VARCHAR, nullable: true}
+  - {name: name_ja, type: VARCHAR, nullable: false}
+  - {name: method, type: VARCHAR, nullable: false, allowed: [route, distance]}
+  - {name: lines, type: 'VARCHAR[]', nullable: false}
+  - {name: prefecture_code, type: VARCHAR, nullable: true}
+  - {name: license, type: VARCHAR, nullable: false}
+  - {name: geometry, type: GEOMETRY, nullable: false}

@@ -14,7 +14,7 @@ Las correspondencias juego ↔ realidad salen de `seeds` con su nivel de `confid
 | 1 | Points | Pokémon Centers de Japón (y Poké Lids, si hay fuente válida) | `poi` (osm, seeds) | Web |
 | 2 | Lines | Red ferroviaria de Kanto con el Shinkansen destacado | `rail` (osm) | Web |
 | 3 | Polygons | Las 4 regiones del juego sobre sus prefecturas reales | `game_region`, `prefecture` (natural_earth, seeds) | Web |
-| 4 | Clusters | Dónde se amontona lo Pokémon: clusters de tiendas y cafés en Tokio y Osaka | `poi` + clustering | Web |
+| 4 | Clusters | Las Poké Lids se instalan en series por municipio: clusters reales en todo Japón (celdas H3 conectadas). Tiendas, centros y cafés Pokémon, como capa secundaria | `poi_clusters` (osm) | Web |
 | 5 | Senses: Sight | Desde dónde se ve el Fuji: cuenca visual calculada sobre el DEM | `raster_product` → polígono (copernicus_dem) | Web |
 | 6 | Vintage | Todo el atlas en paleta Game Boy (el easter egg, activado por URL) | Todas las capas | Web |
 | 7 | 10 minute map | Con el Gold listo, un mapa armado en 10 minutos cronometrados (se documenta el tiempo) | Cualquier vista Gold | Lateral |

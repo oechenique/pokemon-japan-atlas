@@ -1,0 +1,17 @@
+entity: fuji_viewshed
+description: >-
+  Desde dónde se ve el Fuji (día 5): la cuenca visual de raster_product como polígono
+  simplificado, con la definición de "visible" en method.
+sources: [raster_product]
+primary_key: [product_id]
+geometry:
+  types: [POLYGON, MULTIPOLYGON]
+  inside_japan: true
+count: {min: 1, max: 1}
+columns:
+  - {name: product_id, type: VARCHAR, nullable: false}
+  - {name: visible_share, type: DOUBLE, nullable: false, range: [0, 1]}
+  - {name: method, type: VARCHAR, nullable: false}
+  - {name: notice, type: VARCHAR, nullable: false}
+  - {name: license, type: VARCHAR, nullable: false}
+  - {name: geometry, type: GEOMETRY, nullable: false}

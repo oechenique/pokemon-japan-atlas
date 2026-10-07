@@ -21,10 +21,11 @@ from typing import Any
 
 import duckdb
 
-from pipeline.quality.contracts import Contract, load_contracts
+from pipeline.quality.contracts import GOLD_CONTRACTS_DIR, Contract, load_contracts
 from pipeline.sources.base import METADATA, RUN_ID, sha256_file, utc_now
 
 SILVER = "silver"
+GOLD = "gold"
 RUNS_DIR = "_runs"
 GEOMETRY_PARQUET_TYPE = "GEOMETRY('OGC:CRS84')"
 
@@ -123,7 +124,15 @@ def create_table(
 
 
 def silver_path(entity: str, root: Path | None = None) -> Path:
-    return (root or data_root()) / SILVER / f"{entity}.parquet"
+    return layer_path(SILVER, entity, root)
+
+
+def gold_path(entity: str, root: Path | None = None) -> Path:
+    return layer_path(GOLD, entity, root)
+
+
+def layer_path(layer: str, entity: str, root: Path | None = None) -> Path:
+    return (root or data_root()) / layer / f"{entity}.parquet"
 
 
 def write_entity(
@@ -133,10 +142,16 @@ def write_entity(
     *,
     root: Path | None = None,
     contracts: dict[str, Contract] | None = None,
+    layer: str = SILVER,
 ) -> dict[str, Any]:
-    """Escribe la entidad con las columnas de su contrato, ordenada por la clave primaria."""
-    contract = (contracts or load_contracts())[entity]
-    target = silver_path(entity, root)
+    """Escribe la entidad con las columnas de su contrato, ordenada por la clave primaria.
+
+    layer es silver o gold; los contratos de Gold están en pipeline/contracts/gold/.
+    """
+    if contracts is None:
+        contracts = load_contracts(GOLD_CONTRACTS_DIR) if layer == GOLD else load_contracts()
+    contract = contracts[entity]
+    target = layer_path(layer, entity, root)
     target.parent.mkdir(parents=True, exist_ok=True)
     part = target.with_name(target.name + ".part")
     part.unlink(missing_ok=True)
@@ -158,17 +173,20 @@ def write_entity(
         "rows": rows,
         "bytes": target.stat().st_size,
         "sha256": sha256_file(target),
-        "path": f"{SILVER}/{entity}.parquet",
+        "path": f"{layer}/{entity}.parquet",
     }
 
 
 def write_run_lineage(
-    run_id: str, summaries: Iterable[dict[str, Any]], root: Path | None = None
+    run_id: str,
+    summaries: Iterable[dict[str, Any]],
+    root: Path | None = None,
+    layer: str = SILVER,
 ) -> dict[str, Any]:
-    """Linaje de Silver de la corrida: qué entidades se escribieron, con su hash."""
+    """Linaje de la capa en la corrida: qué entidades se escribieron, con su hash."""
     items = sorted(summaries, key=lambda s: s["entity"])
     report = {"run_id": run_id, "written_at": utc_now(), "entities": items}
-    out = (root or data_root()) / SILVER / RUNS_DIR / f"run_id={run_id}.json"
+    out = (root or data_root()) / layer / RUNS_DIR / f"run_id={run_id}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(
         json.dumps(report, indent=2, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8"

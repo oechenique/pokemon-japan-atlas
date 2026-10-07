@@ -1,0 +1,16 @@
+entity: osm_summary
+description: >-
+  Todo lo del atlas que viene de OpenStreetMap (día 21): cantidad de elementos por
+  capa y categoría, con su atribución.
+sources: [poi, rail, station, building, shinkansen_route_stop]
+primary_key: [layer, category]
+geometry:
+  types: []
+  inside_japan: false
+count: {min: 8}
+columns:
+  - {name: layer, type: VARCHAR, nullable: false}
+  - {name: category, type: VARCHAR, nullable: false}
+  - {name: elements, type: BIGINT, nullable: false, range: [0, 10000000]}
+  - {name: attribution, type: VARCHAR, nullable: false}
+  - {name: license, type: VARCHAR, nullable: false}

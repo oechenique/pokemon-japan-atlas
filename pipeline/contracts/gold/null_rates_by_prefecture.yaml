@@ -1,0 +1,19 @@
+entity: null_rates_by_prefecture
+description: >-
+  Tasas de nulos por prefectura (día 18), de la sección informative.null_rates del
+  quality_report: una fila por entidad, columna y prefectura. "(sin prefecture_code)"
+  agrupa las filas sin prefectura.
+sources: [quality_report]
+primary_key: [entity, column_name, prefecture_code]
+geometry:
+  types: []
+  inside_japan: false
+count: {min: 47}
+columns:
+  - {name: entity, type: VARCHAR, nullable: false}
+  - {name: column_name, type: VARCHAR, nullable: false}
+  - {name: prefecture_code, type: VARCHAR, nullable: false}
+  - {name: row_count, type: BIGINT, nullable: false}
+  - {name: null_count, type: BIGINT, nullable: false}
+  - {name: rate, type: DOUBLE, nullable: true, range: [0, 1]}
+  - {name: license, type: VARCHAR, nullable: false}

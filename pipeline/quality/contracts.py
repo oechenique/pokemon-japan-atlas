@@ -21,6 +21,8 @@ import yaml
 from pipeline.sources.registry import Registry
 
 CONTRACTS_DIR = Path(__file__).resolve().parents[1] / "contracts"
+# Contratos de las tablas derivadas de Gold: no entran en el chequeo contra el registro.
+GOLD_CONTRACTS_DIR = CONTRACTS_DIR / "gold"
 
 TYPES = frozenset(
     {

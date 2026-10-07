@@ -99,7 +99,7 @@ Pendiente para la Fase 3:
 
 La partición de Overpass que se había propuesto acá se implementó en el paso 1 de la Fase 2.
 
-**Fase 2 · Silver/Gold: en curso. Pasos 1 a 6 cerrados (2026-10-07); próximo: paso 7 (Gold y `v_day_XX`), con `OVERPASS_MODE=reuse`.**
+**Fase 2 · Silver/Gold: en curso. Pasos 1 a 7 cerrados (2026-10-07); próximo: paso 8 (idempotencia de Silver/Gold y una sola corrida final con `query`).**
 
 Plan aprobado (2026-10-07):
 
@@ -193,11 +193,7 @@ Insumos para el día 18 (NULL), del paso 4:
 - Errores de marca en OSM entre Pokémon Center y Store: 3.
 - Estaciones con `lines`: 4 de 9091.
 
-Pendiente para el paso 7 (Gold), pedido por el usuario el 2026-10-07:
-
-- Día 12: las 19 885 centrales son demasiado ruido. Filtrar por `plant:source` (nuclear, hydro, coal/gas/oil), o por capacidad cuando exista, y dejar las solares chicas fuera de la vista del día.
-- Día 24: asignar las estaciones a la línea del Shinkansen por proximidad espacial, porque casi no hay tags de línea.
-- Kuriles del sur: documentar en el README (Fase 6) que se sigue la representación de Natural Earth (control de hecho) y que esos puntos quedan sin prefectura.
+Pendiente para la Fase 6 (README): documentar que en las Kuriles del sur se sigue la representación de Natural Earth (control de hecho) y que esos puntos quedan sin prefectura.
 
 Paso 5 · Rasters y H3 (corrida `20261007T182906Z`, con `reuse`):
 
@@ -254,4 +250,28 @@ Paso 6 · DQ gate (corrida `20261007T185143Z`, con `reuse`): `pipeline/quality/g
 - Bronze nuevo para la cobertura: consultas `game_places_p144` y `regional_dishes`, y seed `coverage_references.csv`.
 - `basemap` (29 402 elementos, 45 MB): se construyó en este paso porque el gate detectó que faltaba. Se excluye "Null island", el elemento ficticio de Natural Earth en 0°, 0° (2 filas, que también sirven para el día 18).
 - `.gitignore` excluye `publish/*/quality_report.json`. El de la corrida final se habilita con una línea `!` propia.
+
+Paso 7 · Gold y `v_day_XX` (corrida `20261007T194212Z`, con `reuse`: 104 tareas en verde, gate con 255 checks):
+
+- Gold vive en `data/gold/` (54 MB) y tiene dos tipos de tabla:
+  - las 12 entidades de Silver aprobadas, enlazadas con hardlink (los rasters siguen en `data/silver/rasters/`);
+  - 10 tablas derivadas con contrato en `pipeline/contracts/gold/`.
+- Vistas: `data/gold/atlas.duckdb` tiene 24 vistas `gold.v_day_XX`, que leen los parquet por nombre relativo; hay que abrirla con `views.open_atlas()`. Los días 6, 7, 10, 16, 25 y 27 no tienen vista, con el motivo documentado.
+- `atlas_run`: el grupo `gold` corre después del gate (`copy_silver`, una tarea por tabla derivada, `views` y `lineage`).
+- Cambios en Silver:
+  - `poi.plant_output_mw` (MW, desde `plant:output:electricity` cuando trae número y unidad);
+  - entidad nueva `shinkansen_route_stop`: paradas de las relaciones de ruta de OSM, con una categoría nueva de Overpass, `shinkansen_routes`.
+- Modo `OVERPASS_MODE=reuse_or_query`: reusa lo que hay y consulta solo lo que falta (sirvió para traer las rutas sin repetir las 58 consultas). También queda marcado y no sirve para publicar.
+- Día 4 (regla 04 actualizada): clusters de Poké Lids, con tiendas, centros y cafés como capa secundaria.
+  - Un cluster son celdas H3 de resolución 7 ocupadas y conectadas a 2 anillos o menos, con 2 puntos o más.
+  - Resultado: 39 clusters de Poké Lids (104 de 257 tapas) y 5 de tiendas.
+- Día 12: 184 de las 7533 centrales de Kanto. Entran las nucleares, hidroeléctricas y térmicas (también combinadas) y cualquiera de 10 MW o más (69 por su fuente, 41 por su capacidad, 74 por las dos).
+- Día 24:
+  - Las relaciones de ruta de OSM solo cubren el Tōhoku (1 de 13 nombres de línea, 21 paradas). Las demás estaciones salen por distancia: a 10 m o menos de la vía, solo operadores de JR, una por nombre. La línea de cada estación sale de las vías con nombre a 300 m o menos.
+  - Resultado: 102 estaciones y 92 tramos (los del Tōhoku según la ruta; los demás, por árbol de expansión mínima dentro de cada línea).
+  - Errores conocidos del radio: faltan Niigata (a 25 m) y los mini-Shinkansen Akita y Yamagata (sin `highspeed=yes` en OSM); se cuelan Nonoichi, Shin-Hakushima y Kanmaki (convencionales a ~11 m). Una regla de cabeceras por topes de vía sumaba estaciones al lado de depósitos y se descartó.
+  - Si hace falta exactitud, la alternativa es un seed con el listado oficial de estaciones de JR, usado como hecho (permitido por la regla 00).
+- Día 18: `null_findings` (la sección de cobertura del informe más Null Island) y `null_rates_by_prefecture`.
+- Día 5: `fuji_viewshed`, con la definición de "visible" en la columna `method`.
+- El `quality_report` suma el hallazgo `osm_shinkansen_routes`.
 

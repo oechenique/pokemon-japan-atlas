@@ -37,6 +37,8 @@ columns:
   - {name: name_es, type: VARCHAR, nullable: true}
   # Solo en power_plant: plant:source de OSM (solar, hydro, nuclear...).
   - {name: plant_source, type: VARCHAR, nullable: true}
+  # Solo en power_plant: plant:output:electricity en MW, cuando trae número y unidad.
+  - {name: plant_output_mw, type: DOUBLE, nullable: true, range: [0, 100000]}
   # Solo en las filas del seed: la dirección de la web oficial.
   - {name: address_ja, type: VARCHAR, nullable: true}
   - {name: prefecture_code, type: VARCHAR, nullable: true, pattern: '^JP-\d{2}$'}

@@ -1,0 +1,20 @@
+entity: null_findings
+description: >-
+  Los huecos de las fuentes (día 18, NULL): la sección coverage del quality_report de la
+  corrida, más Null Island (el elemento ficticio de Natural Earth que se excluye del
+  mapa base).
+sources: [quality_report, basemap]
+primary_key: [finding_id]
+geometry:
+  types: []
+  inside_japan: false
+count: {min: 10}
+columns:
+  - {name: finding_id, type: VARCHAR, nullable: false}
+  - {name: title, type: VARCHAR, nullable: false}
+  - {name: value, type: BIGINT, nullable: false}
+  - {name: total, type: BIGINT, nullable: true}
+  - {name: share, type: DOUBLE, nullable: true, range: [0, 1]}
+  - {name: source, type: VARCHAR, nullable: false}
+  - {name: detail, type: VARCHAR, nullable: true}
+  - {name: license, type: VARCHAR, nullable: false}

@@ -40,6 +40,7 @@ from pipeline.transforms.base import (
     silver_path,
     sparql_rows,
 )
+from pipeline.transforms.gold.shinkansen_stations import DIRECTION
 from pipeline.transforms.silver.outside_region import ROMAN
 
 REPORT_NAME = "quality_report.json"
@@ -460,6 +461,26 @@ def coverage_findings(
             f"{zone.get('kuriles', 0)} en las Kuriles del sur (se sigue a Natural Earth: "
             "control de hecho) y "
             f"{zone.get('islas', 0)} en islas chicas que Natural Earth a 10 m no tiene.",
+        )
+    )
+
+    routes = con.execute(f"""
+        SELECT DISTINCT trim(regexp_replace(route_name, '{DIRECTION}', ''))
+        FROM {silver("shinkansen_route_stop")} WHERE route_name IS NOT NULL
+    """).fetchall()
+    lines = one(f"""
+        SELECT count(DISTINCT name_ja) FROM {silver("rail")}
+        WHERE kind = 'shinkansen' AND name_ja LIKE '%新幹線'
+    """)[0]
+    findings.append(
+        _finding(
+            "osm_shinkansen_routes",
+            "Líneas del Shinkansen con relación de ruta y paradas en OSM",
+            len(routes),
+            lines,
+            "osm_overpass",
+            f"Con ruta: {', '.join(sorted(r for (r,) in routes))}. Las demás estaciones del día 24 "
+            "salen por distancia a la vía (10 m).",
         )
     )
 

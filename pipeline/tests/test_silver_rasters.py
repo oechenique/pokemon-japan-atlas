@@ -158,11 +158,11 @@ def h3_inputs(tmp_path):
         "poi",
         """
         SELECT * FROM (VALUES
-          ('osm:node/1', 'osm', 'node/1', 'pokemon_center', NULL, NULL, NULL, NULL, NULL, 'JP-13', 'within', 'kanto',
+          ('osm:node/1', 'osm', 'node/1', 'pokemon_center', NULL, NULL, NULL, NULL, NULL, NULL, 'JP-13', 'within', 'kanto',
            h3_latlng_to_cell_string(35.01, 139.01, 7), h3_latlng_to_cell_string(35.01, 139.01, 9), 'x', ST_Point(139.01, 35.01)),
-          ('osm:node/2', 'osm', 'node/2', 'onsen', NULL, NULL, NULL, NULL, NULL, 'JP-13', 'within', 'kanto',
+          ('osm:node/2', 'osm', 'node/2', 'onsen', NULL, NULL, NULL, NULL, NULL, NULL, 'JP-13', 'within', 'kanto',
            h3_latlng_to_cell_string(35.01, 139.01, 7), h3_latlng_to_cell_string(35.01, 139.01, 9), 'x', ST_Point(139.01, 35.01))
-        ) AS t(poi_id, source, source_id, category, name_ja, name_en, name_es, plant_source, address_ja,
+        ) AS t(poi_id, source, source_id, category, name_ja, name_en, name_es, plant_source, plant_output_mw, address_ja,
                prefecture_code, prefecture_method, game_region, h3_r7, h3_r9, license, geometry)
     """,
         root=tmp_path,

@@ -1,0 +1,24 @@
+entity: power_plants_kanto
+description: >-
+  Centrales de la región Kanto del juego (día 12), sin el ruido de las solares chicas:
+  entran las nucleares, hidroeléctricas y térmicas (carbón, gas, petróleo, también
+  combinadas) y cualquier central de 10 MW o más.
+sources: [poi]
+primary_key: [poi_id]
+geometry:
+  types: [POINT]
+  inside_japan: true
+count: {min: 50}
+columns:
+  - {name: poi_id, type: VARCHAR, nullable: false}
+  - {name: name_ja, type: VARCHAR, nullable: true}
+  - {name: name_en, type: VARCHAR, nullable: true}
+  - {name: plant_source, type: VARCHAR, nullable: true}
+  - {name: plant_output_mw, type: DOUBLE, nullable: true, range: [0, 100000]}
+  # Por qué entra: por su fuente, por su capacidad o por las dos.
+  - {name: reason, type: VARCHAR, nullable: false, allowed: [source, capacity, source+capacity]}
+  - {name: prefecture_code, type: VARCHAR, nullable: true}
+  - {name: license, type: VARCHAR, nullable: false}
+  - {name: geometry, type: GEOMETRY, nullable: false}
+null_report:
+  columns: [name_en, plant_output_mw]

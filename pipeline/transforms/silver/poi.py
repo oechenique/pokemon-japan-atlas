@@ -8,7 +8,9 @@
 - Pokémon Café: salen del seed pokemon_cafes (dirección oficial). El nodo de OSM que
   cada fila cita en coords_osm no se duplica.
 - Nombres: name:ja o name para el japonés; name:en y name:es, sin inventar
-  traducciones. plant_source solo en las centrales.
+  traducciones. plant_source y plant_output_mw solo en las centrales; la capacidad sale
+  de plant:output:electricity cuando trae número y unidad (GW, MW o kW, con o sin "p"
+  de pico): "yes" y otros textos quedan en NULL.
 - Prefectura por ubicación (osm.assign_prefecture) y región del juego por prefectura.
 """
 
@@ -31,6 +33,7 @@ PRECEDENCE = (
 )
 BY_NAME = (("pokemon_center", "^ポケモンセンター"), ("pokemon_store", "^ポケモンストア"))
 OSM_LICENSE = "ODbL-1.0"
+OUTPUT = r"^\s*([0-9]+(\.[0-9]+)?)\s*(gw|mw|kw)p?\s*$"
 SEED_LICENSE = "LicenseRef-seeds + ODbL-1.0"
 
 
@@ -49,6 +52,7 @@ def build(con: duckdb.DuckDBPyConnection, bronze: Bronze, *, root: Path | None =
                    {osm.tag("name:es")} AS name_es,
                    CASE WHEN category = 'power_plant' THEN {osm.tag("plant:source")} END
                        AS plant_source,
+                   CASE WHEN category = 'power_plant' THEN {output_mw()} END AS plant_output_mw,
                    NULL AS address_ja,
                    '{OSM_LICENSE}' AS license,
                    {osm.point_sql()} AS geometry
@@ -58,7 +62,8 @@ def build(con: duckdb.DuckDBPyConnection, bronze: Bronze, *, root: Path | None =
         from_seed AS (
             SELECT 'seed:' || cafe_id AS poi_id, 'seed' AS source, cafe_id AS source_id,
                    'pokemon_cafe' AS category, name_ja, name_en, NULL AS name_es,
-                   NULL AS plant_source, address_ja, '{SEED_LICENSE}' AS license,
+                   NULL AS plant_source, NULL AS plant_output_mw, address_ja,
+                   '{SEED_LICENSE}' AS license,
                    ST_SetCRS(ST_Point(lon::DOUBLE, lat::DOUBLE), 'OGC:CRS84') AS geometry
             FROM seed
         )
@@ -76,7 +81,8 @@ def build(con: duckdb.DuckDBPyConnection, bronze: Bronze, *, root: Path | None =
             FROM read_parquet('{regions}')
         )
         SELECT p.poi_id, p.source, p.source_id, p.category, p.name_ja, p.name_en, p.name_es,
-               p.plant_source, p.address_ja, pr.prefecture_code, pr.prefecture_method,
+               p.plant_source, p.plant_output_mw, p.address_ja, pr.prefecture_code,
+               pr.prefecture_method,
                r.region_id AS game_region,
                h3_latlng_to_cell_string(ST_Y(p.geometry), ST_X(p.geometry), 7) AS h3_r7,
                h3_latlng_to_cell_string(ST_Y(p.geometry), ST_X(p.geometry), 9) AS h3_r9,
@@ -105,3 +111,14 @@ def reclassify_by_name(con: duckdb.DuckDBPyConnection, table: str) -> int:
         WHERE category IN ({pokemon})
     """)
     return changed
+
+
+def output_mw() -> str:
+    """plant:output:electricity en MW, o NULL si no es número con unidad."""
+    value = f"lower({osm.tag('plant:output:electricity')})"
+    number = f"regexp_extract({value}, '{OUTPUT}', 1)"
+    unit = f"regexp_extract({value}, '{OUTPUT}', 3)"
+    return (
+        f"CASE WHEN regexp_matches({value}, '{OUTPUT}') THEN {number}::DOUBLE * "
+        f"CASE {unit} WHEN 'gw' THEN 1000 WHEN 'mw' THEN 1 WHEN 'kw' THEN 0.001 END END"
+    )

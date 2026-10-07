@@ -72,7 +72,7 @@ sources:
       name: Open Database License 1.0
       url: https://opendatacommons.org/licenses/odbl/1-0/
     attribution: "© OpenStreetMap contributors"
-    feeds: [poi, rail, station, h3_metric]
+    feeds: [poi, rail, station, h3_metric, shinkansen_route_stop]
     days: [1, 2, 4, 11, 12, 13, 19, 20, 21, 23, 24]
     params:
       # Una consulta por categoría y por bbox. `bboxes: all` usa japan_bboxes completo.
@@ -123,6 +123,16 @@ sources:
         - id: shinkansen
           selectors:
             - 'way["railway"="rail"]["highspeed"="yes"]'
+          out: geom
+          bboxes: all
+        # Relaciones de ruta del Shinkansen con sus paradas (rol stop), para el grafo del
+        # día 24. Al 2026-10-07 solo el Tōhoku las tiene completas; las demás líneas se
+        # resuelven por distancia a la vía (Gold). out geom trae las coordenadas de las
+        # paradas.
+        - id: shinkansen_routes
+          selectors:
+            - 'relation["route"="train"]["service"="high_speed"]'
+            - 'relation["route"="train"]["name"~"新幹線"]'
           out: geom
           bboxes: all
         # La red completa solo hace falta en Kanto (día 2).

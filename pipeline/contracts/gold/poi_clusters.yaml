@@ -1,0 +1,24 @@
+entity: poi_clusters
+description: >-
+  Clusters de puntos (día 4). Capa principal: Poké Lids, que se instalan en series por
+  municipio. Capa secundaria: tiendas, centros y cafés Pokémon. Un cluster son celdas H3
+  de resolución 7 ocupadas y conectadas a 2 anillos o menos (~3 km); solo clusters de 2
+  o más puntos.
+sources: [poi]
+primary_key: [cluster_id]
+geometry:
+  types: [POLYGON]
+  inside_japan: true
+count: {min: 10}
+count_by:
+  column: layer
+  min: {poke_lids: 10, pokemon_retail: 1}
+columns:
+  - {name: cluster_id, type: VARCHAR, nullable: false, pattern: '^(poke_lids|pokemon_retail):[0-9a-f]{15}$'}
+  - {name: layer, type: VARCHAR, nullable: false, allowed: [poke_lids, pokemon_retail]}
+  - {name: member_count, type: INTEGER, nullable: false, range: [2, 10000]}
+  - {name: members, type: 'VARCHAR[]', nullable: false}
+  - {name: prefecture_codes, type: 'VARCHAR[]', nullable: false}
+  - {name: license, type: VARCHAR, nullable: false}
+  # Envolvente convexa de los puntos con un margen de ~200 m.
+  - {name: geometry, type: GEOMETRY, nullable: false}

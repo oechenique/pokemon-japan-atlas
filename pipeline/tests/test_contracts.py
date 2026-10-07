@@ -11,7 +11,8 @@ from pipeline.quality.contracts import (
     validate_contract,
 )
 
-# Las 7 de reglas/03 más building, basemap, game_place y outside_region.
+# Las 7 de reglas/03 más building, basemap, game_place, outside_region y
+# shinkansen_route_stop.
 EXPECTED = {
     "poi",
     "rail",
@@ -24,6 +25,7 @@ EXPECTED = {
     "basemap",
     "game_place",
     "outside_region",
+    "shinkansen_route_stop",
 }
 
 

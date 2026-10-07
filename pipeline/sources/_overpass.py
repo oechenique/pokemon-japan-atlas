@@ -13,6 +13,10 @@ la consulta sea idéntica (mismos selectores, bbox y snapshot_date). Si falta el
 archivo anterior o la consulta cambió, la ingesta falla en lugar de consultar.
 metadata.json lo deja registrado: extra.overpass_mode, un aviso en warnings y
 reused_from en cada archivo. La corrida de publicación tiene que usar query.
+
+OVERPASS_MODE=reuse_or_query hace lo mismo, pero consulta las consultas que no están en
+la corrida anterior (por ejemplo, una categoría nueva) en lugar de fallar. Sirve para
+traer solo lo nuevo; también queda marcado y tampoco sirve para publicar.
 """
 
 from __future__ import annotations
@@ -37,7 +41,8 @@ TIMESTAMP_LINE = re.compile(
 REMARK = re.compile(rb'"remark":\s*"((?:[^"\\]|\\.)*)"')
 TAIL_BYTES = 4096
 MODE_ENV = "OVERPASS_MODE"
-MODES = frozenset({"query", "reuse"})
+MODES = frozenset({"query", "reuse", "reuse_or_query"})
+REUSING = frozenset({"reuse", "reuse_or_query"})
 # Tipos de fuente del registro que consultan Overpass.
 KINDS = frozenset({"overpass", "overpass_around"})
 
@@ -80,7 +85,8 @@ def fetch(run: BronzeRun, rel: str, query: str) -> FileRecord:
     """Ejecuta una consulta y guarda la respuesta en Bronze (una sola vez por corrida)."""
     if (record := run.done(rel)) is not None:
         return record
-    if mode() == "reuse":
+    current = mode()
+    if current == "reuse" or (current == "reuse_or_query" and _reusable(run, rel, query)):
         return _reuse(run, rel, query)
     config = run.registry.overpass
     with _exclusive(LOCK_PATH):
@@ -113,6 +119,11 @@ def fetch(run: BronzeRun, rel: str, query: str) -> FileRecord:
     )
 
 
+def _reusable(run: BronzeRun, rel: str, query: str) -> bool:
+    previous = run.previous_record(rel)
+    return previous is not None and previous.extra.get("query") == query
+
+
 def _reuse(run: BronzeRun, rel: str, query: str) -> FileRecord:
     previous = run.previous_record(rel)
     if previous is None:
@@ -135,10 +146,11 @@ def finalize(run: BronzeRun, **extra: object) -> None:
     run.extra.update(
         overpass_mode=current, snapshot_date=run.registry.overpass["snapshot_date"], **extra
     )
-    if current == "reuse":
+    if current in REUSING:
         run.warn(
-            f"{MODE_ENV}=reuse: Overpass no se consultó; los archivos se copiaron del "
-            "Bronze anterior (ver reused_from). No sirve para la corrida de publicación."
+            f"{MODE_ENV}={current}: Overpass no se consultó (o solo para lo que faltaba); los "
+            "archivos reusados se copiaron del Bronze anterior (ver reused_from). No sirve "
+            "para la corrida de publicación."
         )
 
 

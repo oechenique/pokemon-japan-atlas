@@ -1,0 +1,19 @@
+entity: center_nearest_station
+description: >-
+  Cada Pokémon Center con su estación de tren más cercana (día 13), la distancia en
+  línea recta y el tramo entre los dos.
+sources: [poi, station]
+primary_key: [poi_id]
+geometry:
+  types: [LINESTRING]
+  inside_japan: true
+count: {min: 15}
+columns:
+  - {name: poi_id, type: VARCHAR, nullable: false}
+  - {name: center_name, type: VARCHAR, nullable: true}
+  - {name: station_id, type: VARCHAR, nullable: false}
+  - {name: station_name, type: VARCHAR, nullable: true}
+  - {name: distance_m, type: DOUBLE, nullable: false, range: [0, 50000]}
+  - {name: game_region, type: VARCHAR, nullable: true}
+  - {name: license, type: VARCHAR, nullable: false}
+  - {name: geometry, type: GEOMETRY, nullable: false}

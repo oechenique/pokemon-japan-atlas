@@ -65,3 +65,15 @@ def test_dq_gate_runs_after_silver_without_retries():
     assert gate.retries == 0
     assert "silver.lineage" in gate.upstream_task_ids
     assert {o.name for o in gate.outlets} == {"quality_report"}
+
+
+def test_gold_runs_after_the_gate_and_views_after_every_table():
+    from pipeline.transforms.gold_entities import DERIVED
+
+    dag = _bag().dags["atlas_run"]
+    assert "dq_gate" in dag.get_task("gold.copy_silver").upstream_task_ids
+    for table, upstream in DERIVED.items():
+        task = dag.get_task(f"gold.{table}")
+        assert task.retries == 0
+        assert {"gold.copy_silver", *(f"gold.{u}" for u in upstream)} <= task.upstream_task_ids
+        assert f"gold.{table}" in dag.get_task("gold.views").upstream_task_ids

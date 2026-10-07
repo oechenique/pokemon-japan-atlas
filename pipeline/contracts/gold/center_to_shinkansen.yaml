@@ -1,0 +1,18 @@
+entity: center_to_shinkansen
+description: >-
+  Cada Pokémon Center con la estación del Shinkansen más cercana (día 24): qué ciudades
+  con Pokémon Center conecta la red.
+sources: [poi, shinkansen_stations]
+primary_key: [poi_id]
+geometry:
+  types: [LINESTRING]
+  inside_japan: true
+count: {min: 15}
+columns:
+  - {name: poi_id, type: VARCHAR, nullable: false}
+  - {name: center_name, type: VARCHAR, nullable: true}
+  - {name: station_key, type: VARCHAR, nullable: false}
+  - {name: station_name, type: VARCHAR, nullable: false}
+  - {name: distance_km, type: DOUBLE, nullable: false, range: [0, 1000]}
+  - {name: license, type: VARCHAR, nullable: false}
+  - {name: geometry, type: GEOMETRY, nullable: false}
